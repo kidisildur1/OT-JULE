@@ -2,22 +2,19 @@
   const app = document.getElementById("app");
   const data = window.SafetyData;
   const defaultModule = data.modules[0];
-  const firstOrganization = data.organizationTree[0];
-  const firstDepartment = firstOrganization.departments[0];
-  const firstLab = firstDepartment.labs[0];
-  const firstSector = firstLab.sectors[0];
-  const firstEquipmentId = firstSector.equipmentIds[0];
-  const STORAGE_KEY = "safetyTrainingResultsV2";
-  const DEMO_KEY = "safetyTrainingDemoSeededV2";
+  const STORAGE_KEY = "safetyTrainingResultsV3";
+  const DEMO_KEY = "safetyTrainingDemoSeededV3";
+
+  const defaultOrganization = data.trainingCatalog[0];
+  const defaultUnit = defaultOrganization.children[0];
+  const defaultEquipment = defaultUnit.equipment[0];
 
   const state = {
     view: "home",
     selection: {
-      organizationId: firstOrganization.id,
-      departmentId: firstDepartment.id,
-      labId: firstLab.id,
-      sectorId: firstSector.id,
-      equipmentId: firstEquipmentId
+      organizationId: defaultOrganization.id,
+      unitId: defaultUnit.id,
+      equipmentId: defaultEquipment.id
     },
     employee: {
       name: "",
@@ -53,37 +50,57 @@
   }
 
   function selectedOrganization() {
-    return byId(data.organizationTree, state.selection.organizationId) || data.organizationTree[0];
+    return byId(data.trainingCatalog, state.selection.organizationId) || data.trainingCatalog[0];
   }
 
-  function selectedDepartment() {
+  function selectedUnit() {
     const organization = selectedOrganization();
-    return byId(organization.departments, state.selection.departmentId) || organization.departments[0];
-  }
-
-  function selectedLab() {
-    const department = selectedDepartment();
-    return byId(department.labs, state.selection.labId) || department.labs[0];
-  }
-
-  function selectedSector() {
-    const lab = selectedLab();
-    return byId(lab.sectors, state.selection.sectorId) || lab.sectors[0];
+    return byId(organization.children, state.selection.unitId) || organization.children[0];
   }
 
   function selectedEquipment() {
-    const sector = selectedSector();
-    const equipmentId = state.selection.equipmentId || sector.equipmentIds[0];
-    return byId(data.equipment, equipmentId) || data.equipment[0];
+    const unit = selectedUnit();
+    return byId(unit.equipment || [], state.selection.equipmentId) || (unit.equipment || [])[0] || null;
   }
 
   function selectedModule() {
     const equipment = selectedEquipment();
-    return data.modules.find((item) => item.equipmentId === equipment.id) || defaultModule;
+    if (!equipment) {
+      return null;
+    }
+    return data.modules.find((item) => item.equipmentId === equipment.id) || null;
   }
 
-  function fullSubdivision(separator = " / ") {
-    return [selectedDepartment().name, selectedLab().name, selectedSector().name].join(separator);
+  function findReadyPath() {
+    for (const organization of data.trainingCatalog) {
+      for (const unit of organization.children) {
+        const equipment = (unit.equipment || []).find((item) => item.status === "ready");
+        if (equipment) {
+          return { organization, unit, equipment };
+        }
+      }
+    }
+    return { organization: defaultOrganization, unit: defaultUnit, equipment: defaultEquipment };
+  }
+
+  function typeLabel(type) {
+    return {
+      department: "Отдел",
+      laboratory: "Лаборатория",
+      sector: "Сектор",
+      center: "Центр"
+    }[type] || "Подразделение";
+  }
+
+  function statusText(equipment) {
+    if (!equipment) {
+      return "Обучающий модуль в разработке";
+    }
+    return equipment.status === "ready" ? "Готово к прохождению" : "Обучающий модуль в разработке";
+  }
+
+  function isReadyEquipment(equipment) {
+    return Boolean(equipment && equipment.status === "ready" && selectedModule());
   }
 
   function setView(view) {
@@ -92,36 +109,13 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function optionList(items, selectedId) {
-    return items
-      .map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === selectedId ? "selected" : ""}>${escapeHtml(item.name)}</option>`)
-      .join("");
-  }
-
-  function syncCascade(changedLevel) {
+  function syncUnitSelection() {
     const organization = selectedOrganization();
-
-    if (changedLevel === "organization" || !organization.departments.some((item) => item.id === state.selection.departmentId)) {
-      state.selection.departmentId = organization.departments[0].id;
-      changedLevel = "department";
+    if (!organization.children.some((unit) => unit.id === state.selection.unitId)) {
+      state.selection.unitId = organization.children[0].id;
     }
-
-    const department = selectedDepartment();
-    if (changedLevel === "department" || !department.labs.some((item) => item.id === state.selection.labId)) {
-      state.selection.labId = department.labs[0].id;
-      changedLevel = "lab";
-    }
-
-    const lab = selectedLab();
-    if (changedLevel === "lab" || !lab.sectors.some((item) => item.id === state.selection.sectorId)) {
-      state.selection.sectorId = lab.sectors[0].id;
-      changedLevel = "sector";
-    }
-
-    const sector = selectedSector();
-    if (changedLevel === "sector" || !sector.equipmentIds.includes(state.selection.equipmentId)) {
-      state.selection.equipmentId = sector.equipmentIds[0];
-    }
+    const equipment = selectedEquipment();
+    state.selection.equipmentId = equipment ? equipment.id : "";
   }
 
   function loadResults() {
@@ -148,12 +142,7 @@
       return;
     }
 
-    const equipment = data.equipment[0];
-    const organization = data.organizationTree[0];
-    const department = organization.departments[0];
-    const lab = department.labs[0];
-    const sector = lab.sectors[0];
-    const subdivision = [department.name, lab.name, sector.name].join(" / ");
+    const { organization, unit, equipment } = findReadyPath();
     const now = Date.now();
     const demo = [
       {
@@ -165,37 +154,16 @@
         position: "инженер-испытатель",
         email: "ivanov@example.com",
         organization: organization.name,
-        department: subdivision,
+        department: unit.name,
         equipment: equipment.name,
         installation: equipment.name,
-        instruction: equipment.instructionCode,
+        instruction: equipment.instruction,
         moduleId: defaultModule.id,
         score: 9,
         total: 10,
         percent: 90,
         passed: true,
         certificateId: "IOT47-DEMO-0001",
-        answers: []
-      },
-      {
-        id: "demo-2",
-        demo: true,
-        date: new Date(now - 172800000).toISOString(),
-        employeeName: "Петрова Анна Викторовна",
-        tabNumber: "0227",
-        position: "младший научный сотрудник",
-        email: "petrova@example.com",
-        organization: organization.name,
-        department: subdivision,
-        equipment: equipment.name,
-        installation: equipment.name,
-        instruction: equipment.instructionCode,
-        moduleId: defaultModule.id,
-        score: 10,
-        total: 10,
-        percent: 100,
-        passed: true,
-        certificateId: "IOT47-DEMO-0002",
         answers: []
       }
     ];
@@ -204,22 +172,16 @@
     localStorage.setItem(DEMO_KEY, "1");
   }
 
-  function button(label, view, variant = "primary") {
-    return `<button class="btn ${variant}" type="button" data-action="go" data-view="${view}">${escapeHtml(label)}</button>`;
-  }
-
   function renderSteps(active) {
     const steps = [
-      ["identity", "Данные"],
+      ["identity", "Данные сотрудника"],
       ["unit", "Подразделение"],
-      ["equipment-card", "Установка"],
-      ["video", "Видео"],
+      ["equipment", "Установка"],
       ["learning", "Обучение"],
       ["test", "Тест"],
       ["certificate", "Сертификат"]
     ];
-    const order = steps.map((item) => item[0]);
-    const activeIndex = order.indexOf(active);
+    const activeIndex = steps.findIndex(([id]) => id === active);
 
     return `
       <ol class="stepper compact no-print" aria-label="Этапы обучения">
@@ -230,6 +192,22 @@
           })
           .join("")}
       </ol>
+    `;
+  }
+
+  function renderBreadcrumbs(includeEquipment = true) {
+    const organization = selectedOrganization();
+    const unit = selectedUnit();
+    const equipment = selectedEquipment();
+    const parts = [organization.name, unit.name];
+    if (includeEquipment && equipment) {
+      parts.push(equipment.shortName || equipment.name);
+    }
+
+    return `
+      <nav class="breadcrumbs no-print" aria-label="Выбранный маршрут">
+        ${parts.map((part) => `<span>${escapeHtml(part)}</span>`).join("")}
+      </nav>
     `;
   }
 
@@ -245,38 +223,19 @@
 
   function renderHome() {
     app.innerHTML = `
-      <section class="hero employee-home">
+      <section class="hero employee-home minimal-home">
         <div class="hero-bg" aria-hidden="true"></div>
         <div class="hero-content">
-          <p class="eyebrow">АО «РусНИТИ» · цифровой инструктаж</p>
           <h1>${escapeHtml(data.project.title)}</h1>
           <p>${escapeHtml(data.project.subtitle)}</p>
           <div class="hero-actions single-action">
-            ${button("Пройти обучение", "identity")}
+            <button class="btn primary" type="button" data-action="go" data-view="identity">Пройти обучение</button>
           </div>
         </div>
       </section>
 
-      <section class="overview-grid compact-overview" aria-label="Краткая информация о доступном модуле">
-        <article class="metric-tile">
-          <span>Доступный модуль</span>
-          <strong>ИОТ-47</strong>
-          <p>Вертикально-сверлильный станок Hitachi B16RM</p>
-        </article>
-        <article class="metric-tile">
-          <span>Сценарий</span>
-          <strong>Видео · тренажер · тест</strong>
-          <p>Результат фиксируется в локальном журнале после успешного прохождения.</p>
-        </article>
-        <article class="metric-tile">
-          <span>Проходной балл</span>
-          <strong>${defaultModule.passScore}%</strong>
-          <p>Сертификат формируется при результате 8 из 10 и выше.</p>
-        </article>
-      </section>
-
       <div class="home-admin-footer no-print">
-        <button class="admin-link" type="button" data-action="go" data-view="admin">Администратор</button>
+        <button class="admin-link" type="button" data-action="go" data-view="admin">служебный доступ</button>
       </div>
     `;
   }
@@ -288,7 +247,7 @@
         <div class="screen-heading">
           <p class="eyebrow">Шаг 1</p>
           <h2>Идентификация сотрудника</h2>
-          <p>Данные попадут в сертификат и уведомление по охране труда.</p>
+          <p>Эти данные попадут в сертификат и уведомление по охране труда.</p>
         </div>
 
         <form class="form-panel identity-panel" id="identityForm">
@@ -314,7 +273,7 @@
           </div>
           <div class="form-actions">
             <button class="btn ghost" type="button" data-action="go" data-view="home">Назад</button>
-            <button class="btn primary" type="submit">Далее</button>
+            <button class="btn primary" type="submit">Продолжить</button>
           </div>
         </form>
       </section>
@@ -340,149 +299,170 @@
   }
 
   function renderUnitSelection() {
-    syncCascade();
     const organization = selectedOrganization();
-    const department = selectedDepartment();
-    const lab = selectedLab();
-    const sector = selectedSector();
-    const equipmentItems = sector.equipmentIds.map((id) => byId(data.equipment, id)).filter(Boolean);
 
     app.innerHTML = `
       ${renderSteps("unit")}
-      <section class="screen-grid">
+      <section class="choice-shell">
         <div class="screen-heading">
           <p class="eyebrow">Шаг 2</p>
-          <h2>Выбор подразделения и установки</h2>
-          <p>Маршрут обучения собирается каскадом: от организации до конкретного оборудования.</p>
+          <h2>Выбор подразделения</h2>
+          <p>Выберите организацию, затем конкретный отдел, лабораторию, сектор или центр из каталога проекта.</p>
         </div>
 
-        <form class="form-panel cascade-panel" id="unitForm">
-          <div class="cascade-grid">
-            <label>
-              <span>Организация</span>
-              <select name="organizationId">${optionList(data.organizationTree, state.selection.organizationId)}</select>
-            </label>
-            <label>
-              <span>Отдел</span>
-              <select name="departmentId">${optionList(organization.departments, state.selection.departmentId)}</select>
-            </label>
-            <label>
-              <span>Лаборатория</span>
-              <select name="labId">${optionList(department.labs, state.selection.labId)}</select>
-            </label>
-            <label>
-              <span>Сектор / участок</span>
-              <select name="sectorId">${optionList(lab.sectors, state.selection.sectorId)}</select>
-            </label>
-            <label class="cascade-wide">
-              <span>Установка / оборудование</span>
-              <select name="equipmentId">${optionList(equipmentItems, state.selection.equipmentId)}</select>
-            </label>
+        <div class="choice-stage">
+          <div class="choice-stage-head">
+            <span>1</span>
+            <div>
+              <h3>Организация</h3>
+              <p>Сначала выберите юридическую площадку.</p>
+            </div>
           </div>
-
-          <aside class="selection-summary">
-            <span>Выбрано</span>
-            <strong>${escapeHtml(selectedEquipment().name)}</strong>
-            <p>${escapeHtml(fullSubdivision(" · "))}</p>
-          </aside>
-
-          <div class="form-actions">
-            <button class="btn ghost" type="button" data-action="go" data-view="identity">Назад</button>
-            <button class="btn primary" type="submit">Показать карточку оборудования</button>
+          <div class="choice-grid organization-grid">
+            ${data.trainingCatalog
+              .map(
+                (item) => `
+                  <button class="selection-card ${item.id === state.selection.organizationId ? "active" : ""}" type="button" data-action="select-organization" data-id="${escapeHtml(item.id)}">
+                    <span class="choice-type">Организация</span>
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <small>${item.children.length} направлений</small>
+                  </button>
+                `
+              )
+              .join("")}
           </div>
-        </form>
+        </div>
+
+        <div class="choice-stage">
+          <div class="choice-stage-head">
+            <span>2</span>
+            <div>
+              <h3>Отдел / лаборатория / сектор</h3>
+              <p>Список меняется в зависимости от выбранной организации.</p>
+            </div>
+          </div>
+          <div class="choice-grid unit-grid">
+            ${organization.children
+              .map((unit) => {
+                const hasReady = (unit.equipment || []).some((equipment) => equipment.status === "ready");
+                return `
+                  <button class="selection-card unit-card ${unit.id === state.selection.unitId ? "active" : ""}" type="button" data-action="select-unit" data-id="${escapeHtml(unit.id)}">
+                    <span class="choice-type">${escapeHtml(typeLabel(unit.type))}</span>
+                    <strong>${escapeHtml(unit.name)}</strong>
+                    <small>${hasReady ? "есть готовый модуль" : "модуль в разработке"}</small>
+                  </button>
+                `;
+              })
+              .join("")}
+          </div>
+        </div>
+
+        ${renderBreadcrumbs(false)}
+
+        <div class="action-strip no-print">
+          <button class="btn ghost" type="button" data-action="go" data-view="identity">Назад</button>
+          <button class="btn primary" type="button" data-action="continue-unit">Выбрать установку</button>
+        </div>
       </section>
     `;
-
-    const form = document.getElementById("unitForm");
-    form.addEventListener("change", (event) => {
-      const target = event.target;
-      state.selection[target.name] = target.value;
-      const level = {
-        organizationId: "organization",
-        departmentId: "department",
-        labId: "lab",
-        sectorId: "sector",
-        equipmentId: "equipment"
-      }[target.name];
-      syncCascade(level);
-      renderUnitSelection();
-    });
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      setView("equipment-card");
-    });
   }
 
-  function renderEquipmentCard() {
+  function renderEquipmentSelection() {
+    const unit = selectedUnit();
+    const equipmentItems = unit.equipment || [];
     const equipment = selectedEquipment();
-    const current = selectedModule();
 
     app.innerHTML = `
-      ${renderSteps("equipment-card")}
+      ${renderSteps("equipment")}
       <section class="equipment-card-screen">
         <div class="screen-heading">
           <p class="eyebrow">Шаг 3</p>
-          <h2>Карточка оборудования</h2>
-          <p>Проверьте, что выбрана правильная установка и инструкция.</p>
+          <h2>Выбор установки</h2>
+          <p>Для готовых модулей можно сразу начать обучение. Для остальных направлений показана заглушка.</p>
         </div>
 
-        <article class="equipment-hero-card">
-          <div class="equipment-hero-main">
-            <span class="badge badge-mandatory">${escapeHtml(equipment.instructionCode)}</span>
-            <h3>${escapeHtml(equipment.name)}</h3>
-            <p>${escapeHtml(equipment.instructionTitle)}</p>
-            <dl class="equipment-details">
-              <div><dt>Организация</dt><dd>${escapeHtml(selectedOrganization().name)}</dd></div>
-              <div><dt>Подразделение</dt><dd>${escapeHtml(fullSubdivision())}</dd></div>
-              <div><dt>Разработчик</dt><dd>${escapeHtml(equipment.developer)}</dd></div>
-              <div><dt>Ответственная по ОТ</dt><dd>${escapeHtml(equipment.safetyResponsible)}</dd></div>
-              <div><dt>Формат</dt><dd>видео, ${current.learningBlocks.length} интерактивных блоков, тест из ${current.test.length} вопросов</dd></div>
-            </dl>
-          </div>
+        ${renderBreadcrumbs(Boolean(equipment))}
 
-          <div class="equipment-risk-panel">
-            <span>Основные риски</span>
-            <div class="risk-chip-grid">
-              ${equipment.risks.map((risk) => `<b>${escapeHtml(risk)}</b>`).join("")}
-            </div>
-          </div>
-        </article>
+        <div class="installation-grid">
+          ${
+            equipmentItems.length
+              ? equipmentItems.map((item) => renderEquipmentCard(item, item.id === state.selection.equipmentId)).join("")
+              : renderPlaceholderCard(unit)
+          }
+        </div>
 
         <div class="action-strip no-print">
           <button class="btn ghost" type="button" data-action="go" data-view="unit">Назад</button>
-          <button class="btn primary" type="button" data-action="begin-training">Начать обучение</button>
+          ${
+            isReadyEquipment(equipment)
+              ? '<button class="btn primary" type="button" data-action="begin-training">Начать обучение</button>'
+              : '<button class="btn primary" type="button" disabled>Модуль в разработке</button>'
+          }
         </div>
       </section>
+    `;
+  }
+
+  function renderEquipmentCard(equipment, active) {
+    const ready = equipment.status === "ready";
+    return `
+      <button class="installation-card ${active ? "active" : ""} ${ready ? "ready" : "disabled"}" type="button" data-action="select-equipment" data-id="${escapeHtml(equipment.id)}">
+        <span class="equipment-status ${ready ? "status-ready" : "status-draft"}">${escapeHtml(statusText(equipment))}</span>
+        <strong>${escapeHtml(equipment.name)}</strong>
+        <small>Инструкция: ${escapeHtml(equipment.instruction || "не назначена")}</small>
+        <small>Подразделение: ${escapeHtml(selectedUnit().name)}</small>
+        <div class="risk-badges">
+          ${(equipment.riskBadges || []).map((risk) => `<b>${escapeHtml(risk)}</b>`).join("")}
+        </div>
+      </button>
+    `;
+  }
+
+  function renderPlaceholderCard(unit) {
+    return `
+      <article class="installation-card placeholder-card">
+        <span class="equipment-status status-draft">Обучающий модуль в разработке</span>
+        <strong>${escapeHtml(unit.name)}</strong>
+        <small>Для этого подразделения установка еще не подключена к цифровому обучению.</small>
+        <div class="risk-badges">
+          <b>каталог создан</b>
+          <b>материалы готовятся</b>
+        </div>
+      </article>
     `;
   }
 
   function renderVideo() {
     const equipment = selectedEquipment();
-    const videoPath = equipment.videoPath;
+    if (!isReadyEquipment(equipment)) {
+      setView("equipment");
+      return;
+    }
+
     app.innerHTML = `
-      ${renderSteps("video")}
+      ${renderSteps("learning")}
       <section class="learning-layout">
         <div class="screen-heading">
-          <p class="eyebrow">Видеообучение</p>
+          <p class="eyebrow">Видео</p>
           <h2>${escapeHtml(equipment.name)}</h2>
-          <p>${escapeHtml(equipment.instructionCode)} · после видео откроется интерактивный тренажер по безопасной работе.</p>
+          <p>${escapeHtml(equipment.instruction)} · после просмотра откроется интерактивное обучение.</p>
         </div>
+
+        ${renderBreadcrumbs()}
 
         <div class="video-shell">
           <video id="trainingVideo" class="${state.videoMissing ? "is-hidden" : ""}" controls playsinline preload="metadata" poster="assets/img/industrial-safety-panel.png">
-            <source src="${escapeHtml(videoPath)}" type="video/mp4">
+            <source src="${escapeHtml(equipment.video)}" type="video/mp4">
           </video>
           <div id="videoFallback" class="video-fallback ${state.videoMissing ? "" : "is-hidden"}">
             <span class="fallback-mark"></span>
             <h3>Видео будет подключено позже</h3>
-            <p>Файл ${escapeHtml(videoPath)} не найден или еще не добавлен. Для демонстрации можно отметить видео как просмотренное и перейти к интерактивному обучению.</p>
+            <p>Файл ${escapeHtml(equipment.video)} не найден. Для демонстрации можно продолжить интерактивное обучение.</p>
           </div>
         </div>
 
-        <div class="action-strip">
-          <button class="btn ghost" type="button" data-action="go" data-view="equipment-card">Назад</button>
+        <div class="action-strip no-print">
+          <button class="btn ghost" type="button" data-action="go" data-view="equipment">Назад</button>
           <button class="btn primary" type="button" data-action="mark-video">Видео просмотрено</button>
         </div>
       </section>
@@ -566,23 +546,6 @@
       `;
     }
 
-    if (block.visualType === "workplace") {
-      return `
-        <div class="learning-visual workzone-grid">
-          ${(visual.zones || [])
-            .map(
-              (zone) => `
-                <article>
-                  <span>${escapeHtml(zone.title)}</span>
-                  <strong>${escapeHtml(zone.state)}</strong>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
-      `;
-    }
-
     if (block.visualType === "inspection") {
       return `
         <div class="learning-visual inspection-grid">
@@ -614,23 +577,6 @@
             <span>Неправильно</span>
             ${(visual.bad || []).map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
           </article>
-        </div>
-      `;
-    }
-
-    if (block.visualType === "process") {
-      return `
-        <div class="learning-visual process-rail">
-          ${(visual.steps || [])
-            .map(
-              (step, index) => `
-                <article>
-                  <span>${index + 1}</span>
-                  <strong>${escapeHtml(step)}</strong>
-                </article>
-              `
-            )
-            .join("")}
         </div>
       `;
     }
@@ -685,23 +631,6 @@
       `;
     }
 
-    if (block.visualType === "memo") {
-      return `
-        <div class="learning-visual memo-grid">
-          ${(visual.cards || [])
-            .map(
-              (card) => `
-                <article>
-                  <strong>${escapeHtml(card.title)}</strong>
-                  <p>${escapeHtml(card.text)}</p>
-                </article>
-              `
-            )
-            .join("")}
-        </div>
-      `;
-    }
-
     return `<div class="learning-visual"></div>`;
   }
 
@@ -750,7 +679,6 @@
 
     const progress = Math.round(((state.learningIndex + 1) / blocks.length) * 100);
     const allViewed = state.visitedLearning.size === blocks.length;
-    const riskClass = badgeClassForRisk(block.riskClass);
 
     app.innerHTML = `
       ${renderSteps("learning")}
@@ -761,11 +689,13 @@
             <h2>${escapeHtml(block.title)}</h2>
             <p>${escapeHtml(block.lead)}</p>
           </div>
-          <div class="risk-meter ${riskClass}">
+          <div class="risk-meter ${badgeClassForRisk(block.riskClass)}">
             <span>Уровень риска</span>
             <strong>${escapeHtml(block.riskLevel)}</strong>
           </div>
         </div>
+
+        ${renderBreadcrumbs()}
 
         <div class="progress-block">
           <div class="progress-meta">
@@ -778,9 +708,9 @@
         <article class="learning-card">
           ${renderBlockVisual(block)}
           <div class="learning-points">
-            <h3>Ключевые действия</h3>
+            <h3>Запомнить</h3>
             <ul class="safety-list">
-              ${block.points.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+              ${block.points.slice(0, 5).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
             </ul>
           </div>
         </article>
@@ -815,6 +745,8 @@
           <h2>10 вопросов · проходной балл ${current.passScore}%</h2>
           <p>Выберите один правильный вариант в каждом вопросе. После отправки появятся пояснения.</p>
         </div>
+
+        ${renderBreadcrumbs()}
 
         <form id="testForm" class="test-form">
           ${current.test
@@ -881,10 +813,10 @@
       position: state.employee.position,
       email: state.employee.email,
       organization: selectedOrganization().name,
-      department: fullSubdivision(),
+      department: selectedUnit().name,
       equipment: equipment.name,
       installation: equipment.name,
-      instruction: equipment.instructionCode,
+      instruction: equipment.instruction,
       instructionTitle: equipment.instructionTitle,
       moduleId: current.id,
       score,
@@ -919,8 +851,8 @@
           <h2>${result.score}/${result.total} · ${result.percent}%</h2>
           <p>${
             result.passed
-              ? "Проходной балл набран. Результат сохранен, сертификат готов к печати, уведомление по ОТ можно отправить письмом."
-              : "Проходной балл не набран. Результат не сохранен в журнале: повторите материал и пройдите тест снова."
+              ? "Результат сохранен. Сертификат готов к печати, уведомление по ОТ можно отправить письмом."
+              : "Проходной балл не набран. Результат не сохранен в журнале."
           }</p>
         </div>
 
@@ -995,7 +927,7 @@
   function renderAdmin() {
     ensureDemoResults();
     const results = loadResults();
-    const equipment = selectedEquipment();
+    const { organization, unit, equipment } = findReadyPath();
     const orgOptions = [...new Set(results.map((item) => item.organization).filter(Boolean))]
       .map((org) => `<option value="${escapeHtml(org)}" ${org === state.journalFilters.organization ? "selected" : ""}>${escapeHtml(org)}</option>`)
       .join("");
@@ -1011,7 +943,7 @@
           <div>
             <p class="eyebrow">Администратор</p>
             <h2>Журнал и справочник модулей</h2>
-            <p>Раздел скрыт с главной страницы для сотрудника и предназначен для проверки результатов.</p>
+            <p>Служебный раздел для просмотра результатов и структуры каталога.</p>
           </div>
           <button class="btn ghost" type="button" data-action="go" data-view="home">На главный экран</button>
         </div>
@@ -1063,29 +995,32 @@
         <section class="admin-reference">
           <article class="module-card">
             <div class="module-card-head">
-              <span class="badge badge-mandatory">${escapeHtml(equipment.instructionCode)}</span>
+              <span class="badge badge-mandatory">${escapeHtml(equipment.instruction)}</span>
               <span>${defaultModule.passScore}%</span>
             </div>
             <h3>${escapeHtml(defaultModule.title)}</h3>
             <dl>
-              <div><dt>Организация</dt><dd>${escapeHtml(selectedOrganization().name)}</dd></div>
-              <div><dt>Подразделение</dt><dd>${escapeHtml(fullSubdivision())}</dd></div>
+              <div><dt>Организация</dt><dd>${escapeHtml(organization.name)}</dd></div>
+              <div><dt>Подразделение</dt><dd>${escapeHtml(unit.name)}</dd></div>
               <div><dt>Разработчик</dt><dd>${escapeHtml(equipment.developer)}</dd></div>
               <div><dt>Ответственная по ОТ</dt><dd>${escapeHtml(equipment.safetyResponsible)}</dd></div>
             </dl>
           </article>
 
           <article class="module-outline">
-            <h3>Интерактивные блоки</h3>
+            <h3>Каталог подразделений</h3>
             <ol>
-              ${defaultModule.learningBlocks.map((block) => `<li>${escapeHtml(block.title)}</li>`).join("")}
+              ${data.trainingCatalog
+                .flatMap((org) => org.children.map((child) => `${org.name}: ${child.name}`))
+                .map((item) => `<li>${escapeHtml(item)}</li>`)
+                .join("")}
             </ol>
           </article>
 
           <article class="module-outline">
-            <h3>Этапы проекта</h3>
+            <h3>Блоки обучения</h3>
             <ol>
-              ${data.project.timeline.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+              ${defaultModule.learningBlocks.map((block) => `<li>${escapeHtml(block.title)}</li>`).join("")}
             </ol>
           </article>
         </section>
@@ -1186,7 +1121,37 @@
       return;
     }
 
+    if (action === "select-organization") {
+      state.selection.organizationId = target.dataset.id;
+      state.selection.unitId = selectedOrganization().children[0].id;
+      syncUnitSelection();
+      renderUnitSelection();
+      return;
+    }
+
+    if (action === "select-unit") {
+      state.selection.unitId = target.dataset.id;
+      syncUnitSelection();
+      renderUnitSelection();
+      return;
+    }
+
+    if (action === "continue-unit") {
+      setView("equipment");
+      return;
+    }
+
+    if (action === "select-equipment") {
+      state.selection.equipmentId = target.dataset.id;
+      renderEquipmentSelection();
+      return;
+    }
+
     if (action === "begin-training") {
+      if (!isReadyEquipment(selectedEquipment())) {
+        showToast("Для выбранной установки модуль еще в разработке");
+        return;
+      }
       resetLearningProgress();
       setView("video");
       return;
@@ -1280,11 +1245,13 @@
   }
 
   function render() {
+    document.body.dataset.view = state.view;
     const views = {
       home: renderHome,
       identity: renderIdentity,
       unit: renderUnitSelection,
-      "equipment-card": renderEquipmentCard,
+      equipment: renderEquipmentSelection,
+      "equipment-card": renderEquipmentSelection,
       video: renderVideo,
       learning: renderLearning,
       test: renderTest,
