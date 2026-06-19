@@ -213,6 +213,38 @@
     `;
   }
 
+  function renderRoutePreview(includeEquipment = false) {
+    const equipment = selectedEquipment();
+    const nodes = [
+      { label: "Организация", value: selectedOrganization().name, status: "done" },
+      { label: typeLabel(selectedUnit().type), value: selectedUnit().name, status: "active" }
+    ];
+
+    if (includeEquipment) {
+      nodes.push({
+        label: "Установка",
+        value: equipment ? equipment.name : "Модуль в разработке",
+        status: equipment ? "done" : "draft"
+      });
+    }
+
+    return `
+      <div class="route-preview no-print" aria-label="Каскад выбранного маршрута">
+        ${nodes
+          .map(
+            (node, index) => `
+              <article class="${node.status}">
+                <span>${index + 1}</span>
+                <small>${escapeHtml(node.label)}</small>
+                <strong>${escapeHtml(node.value)}</strong>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
   function resetLearningProgress() {
     state.videoSeen = false;
     state.videoMissing = false;
@@ -361,6 +393,7 @@
         </div>
 
         ${renderBreadcrumbs(false)}
+        ${renderRoutePreview(false)}
 
         <div class="action-strip no-print">
           <button class="btn ghost" type="button" data-action="go" data-view="identity">Назад</button>
@@ -385,6 +418,7 @@
         </div>
 
         ${renderBreadcrumbs(Boolean(equipment))}
+        ${renderRoutePreview(true)}
 
         <div class="installation-grid">
           ${
@@ -503,6 +537,76 @@
       return { label: "Опасность", className: "badge-danger" };
     }
     return { label: "Обязательно", className: "badge-mandatory" };
+  }
+
+  function learningMetaCards(block) {
+    const tags = {
+      "hazard-map": [
+        ["Опасность", "вращение", "danger"],
+        ["Риск", "стружка", "warning"],
+        ["Контроль", "электрика", "info"]
+      ],
+      "admission-checklist": [
+        ["Обязательно", "допуск", "info"],
+        ["Проверка", "СИЗ", "safe"],
+        ["Контроль", "место", "safe"]
+      ],
+      "ppe-cards": [
+        ["Обязательно", "очки", "info"],
+        ["Безопасно", "одежда", "safe"],
+        ["Проверка", "исправность", "warning"]
+      ],
+      "machine-check": [
+        ["Опасность", "электрика", "danger"],
+        ["Проверка", "пуск/стоп", "info"],
+        ["Обязательно", "заземление", "safe"]
+      ],
+      "part-fixing": [
+        ["Опасность", "проворот", "danger"],
+        ["Правильно", "тиски", "safe"],
+        ["Запрещено", "руками", "danger"]
+      ],
+      "safe-drilling": [
+        ["Процесс", "подача", "info"],
+        ["Внимание", "выход сверла", "warning"],
+        ["Контроль", "вибрация", "danger"]
+      ],
+      "forbidden-actions": [
+        ["Запрещено", "руки", "danger"],
+        ["Запрещено", "патрон", "danger"],
+        ["Стоп", "неисправность", "warning"]
+      ],
+      "emergency-situations": [
+        ["Авария", "пожар", "danger"],
+        ["Авария", "ток", "danger"],
+        ["Службы", "101/112/103", "warning"]
+      ],
+      "emergency-algorithm": [
+        ["Алгоритм", "стоп", "danger"],
+        ["Связь", "руководитель", "info"],
+        ["Помощь", "103", "warning"]
+      ],
+      "finish-work": [
+        ["Финал", "питание", "safe"],
+        ["Порядок", "стружка", "warning"],
+        ["Контроль", "замечания", "info"]
+      ]
+    }[block.id] || [["Риск", block.riskLevel, "info"]];
+
+    return `
+      <div class="learning-meta-grid" aria-label="Ключевые акценты экрана">
+        ${tags
+          .map(
+            ([label, value, tone]) => `
+              <article class="learning-meta-card ${tone}">
+                <span>${escapeHtml(label)}</span>
+                <strong>${escapeHtml(value)}</strong>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
   }
 
   function renderIcon(name) {
@@ -909,6 +1013,7 @@
         </div>
 
         ${renderBreadcrumbs()}
+        ${learningMetaCards(block)}
 
         <div class="progress-block">
           <div class="progress-meta">
