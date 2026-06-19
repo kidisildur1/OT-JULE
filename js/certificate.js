@@ -48,6 +48,10 @@
       <article class="certificate-sheet" id="certificateSheet">
         <div class="certificate-frame">
           <div class="certificate-topline">
+            <div class="certificate-seal" aria-hidden="true">
+              <b>OT</b>
+              <small>JULE</small>
+            </div>
             <span>${escapeHtml(result.organization || "АО «РусНИТИ»")}</span>
             <span>${escapeHtml(result.instruction || "ИОТ-47")}</span>
           </div>
@@ -90,6 +94,8 @@
 
           <div class="certificate-footer">
             <span>Статус: зачтено</span>
+            <span class="certificate-qr" aria-label="QR-код сертификата"></span>
+            <span class="certificate-barcode" aria-hidden="true"></span>
             <span>${escapeHtml(result.certificateId)}</span>
           </div>
         </div>

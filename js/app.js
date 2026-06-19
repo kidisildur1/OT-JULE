@@ -24,10 +24,13 @@
     },
     videoSeen: false,
     videoMissing: false,
+    videoCanContinue: false,
     learningIndex: 0,
     visitedLearning: new Set(),
     miniAnswers: {},
     activeTabs: {},
+    activeHotspots: {},
+    expandedCards: {},
     checklistTicks: {},
     testAnswers: {},
     result: null,
@@ -92,6 +95,15 @@
       sector: "Сектор",
       center: "Центр"
     }[type] || "Подразделение";
+  }
+
+  function typeIcon(type) {
+    return {
+      department: "department",
+      laboratory: "lab",
+      sector: "sector",
+      center: "center"
+    }[type] || "building";
   }
 
   function statusText(equipment) {
@@ -176,9 +188,10 @@
 
   function renderSteps(active) {
     const steps = [
-      ["identity", "Данные сотрудника"],
+      ["identity", "Данные"],
       ["unit", "Подразделение"],
       ["equipment", "Установка"],
+      ["video", "Видео"],
       ["learning", "Обучение"],
       ["test", "Тест"],
       ["certificate", "Сертификат"]
@@ -248,10 +261,13 @@
   function resetLearningProgress() {
     state.videoSeen = false;
     state.videoMissing = false;
+    state.videoCanContinue = false;
     state.learningIndex = 0;
     state.visitedLearning = new Set();
     state.miniAnswers = {};
     state.testAnswers = {};
+    state.activeHotspots = {};
+    state.expandedCards = {};
     state.checklistTicks = {};
     state.result = null;
   }
@@ -358,6 +374,7 @@
               .map(
                 (item) => `
                   <button class="selection-card ${item.id === state.selection.organizationId ? "active" : ""}" type="button" data-action="select-organization" data-id="${escapeHtml(item.id)}">
+                    <span class="selection-icon">${renderIcon("building")}</span>
                     <span class="choice-type">Организация</span>
                     <strong>${escapeHtml(item.name)}</strong>
                     <small>${item.children.length} направлений</small>
@@ -382,6 +399,7 @@
                 const hasReady = (unit.equipment || []).some((equipment) => equipment.status === "ready");
                 return `
                   <button class="selection-card unit-card ${unit.id === state.selection.unitId ? "active" : ""}" type="button" data-action="select-unit" data-id="${escapeHtml(unit.id)}">
+                    <span class="selection-icon">${renderIcon(typeIcon(unit.type))}</span>
                     <span class="choice-type">${escapeHtml(typeLabel(unit.type))}</span>
                     <strong>${escapeHtml(unit.name)}</strong>
                     <small>${hasReady ? "есть готовый модуль" : "модуль в разработке"}</small>
@@ -477,12 +495,12 @@
     }
 
     app.innerHTML = `
-      ${renderSteps("learning")}
+      ${renderSteps("video")}
       <section class="learning-layout">
         <div class="screen-heading">
           <p class="eyebrow">Видео</p>
           <h2>${escapeHtml(equipment.name)}</h2>
-          <p>${escapeHtml(equipment.instruction)} · после просмотра откроется интерактивное обучение.</p>
+          <p>${escapeHtml(equipment.instruction)} · короткий разбор рисков перед практическими модулями.</p>
         </div>
 
         ${renderBreadcrumbs()}
@@ -496,24 +514,44 @@
             <h3>Видео будет подключено позже</h3>
             <p>Файл ${escapeHtml(equipment.video)} не найден. Для демонстрации можно продолжить интерактивное обучение.</p>
           </div>
+          <aside class="video-insight-panel">
+            <span>В фокусе</span>
+            <strong>Вращение · стружка · электрика</strong>
+            <p>Смотрите, где нельзя держать руки и когда нужно остановить станок.</p>
+          </aside>
         </div>
 
         <div class="action-strip no-print">
           <button class="btn ghost" type="button" data-action="go" data-view="equipment">Назад</button>
-          <button class="btn primary" type="button" data-action="mark-video">Видео просмотрено</button>
+          <span id="videoStatusHint" class="video-status-hint ${state.videoCanContinue || state.videoMissing ? "is-hidden" : ""}">Кнопка появится после просмотра.</span>
+          <button id="videoContinueButton" class="btn primary ${state.videoCanContinue || state.videoMissing ? "" : "is-hidden"}" type="button" data-action="mark-video">Видео просмотрено</button>
         </div>
       </section>
     `;
 
     const video = document.getElementById("trainingVideo");
     const fallback = document.getElementById("videoFallback");
+    const continueButton = document.getElementById("videoContinueButton");
+    const statusHint = document.getElementById("videoStatusHint");
+    const unlockVideo = () => {
+      state.videoCanContinue = true;
+      continueButton.classList.remove("is-hidden");
+      statusHint.classList.add("is-hidden");
+    };
     const showFallback = () => {
       state.videoMissing = true;
+      unlockVideo();
       video.classList.add("is-hidden");
       fallback.classList.remove("is-hidden");
     };
     video.addEventListener("error", showFallback);
     video.querySelector("source").addEventListener("error", showFallback);
+    video.addEventListener("ended", unlockVideo);
+    video.addEventListener("timeupdate", () => {
+      if (video.duration && video.currentTime / video.duration > 0.96) {
+        unlockVideo();
+      }
+    });
   }
 
   function badgeClassForRisk(riskClass) {
@@ -638,7 +676,17 @@
       alert:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20Z"/><path d="M12 9v5"/><path d="M12 17h.01"/></svg>',
       clean:
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h14"/><path d="m8 19 1-8h6l1 8"/><path d="M10 11V5h4v6"/><path d="M7 5h10"/></svg>'
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h14"/><path d="m8 19 1-8h6l1 8"/><path d="M10 11V5h4v6"/><path d="M7 5h10"/></svg>',
+      building:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V6l8-4 8 4v15"/><path d="M9 21v-7h6v7"/><path d="M8 8h.01"/><path d="M12 8h.01"/><path d="M16 8h.01"/></svg>',
+      department:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V5h8v15"/><path d="M12 9h8v11"/><path d="M7 8h2"/><path d="M7 12h2"/><path d="M15 12h2"/><path d="M15 16h2"/></svg>',
+      lab:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6"/><path d="M10 2v6l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V2"/><path d="M7.5 16h9"/></svg>',
+      sector:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/><path d="M8 5v14"/><path d="M16 5v14"/></svg>',
+      center:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M3 12h18"/><path d="m6 6 12 12"/><path d="m18 6-12 12"/></svg>'
     };
     return icons[name] || icons.check;
   }
@@ -716,6 +764,9 @@
     const visual = block.visual || {};
 
     if (block.visualType === "hazard-map") {
+      const markers = visual.markers || [];
+      const activeIndex = state.activeHotspots[block.id] ?? 0;
+      const activeMarker = markers[activeIndex] || markers[0];
       return `
         <div class="learning-visual hazard-map-visual">
           <div class="machine-map" aria-label="Схема опасных зон станка">
@@ -724,28 +775,37 @@
             <div class="machine-spindle"></div>
             <div class="machine-table"></div>
             <div class="machine-base"></div>
-            ${(visual.markers || [])
+            ${markers
               .map(
                 (marker, index) => `
-                  <span class="hotspot" style="left:${marker.x}%; top:${marker.y}%;">
+                  <button class="hotspot ${index === activeIndex ? "active" : ""}" type="button" data-action="select-hotspot" data-index="${index}" style="left:${marker.x}%; top:${marker.y}%;">
                     <i>${index + 1}</i>
                     <b>${escapeHtml(marker.label)}</b>
-                  </span>
+                  </button>
                 `
               )
               .join("")}
           </div>
           <div class="hotspot-list">
-            ${(visual.markers || [])
+            ${activeMarker ? `
+              <article class="hotspot-panel">
+                <span class="mini-icon">${renderIcon(activeMarker.icon || "alert")}</span>
+                <div>
+                  <strong>${escapeHtml(activeMarker.label)}</strong>
+                  <p>${escapeHtml(activeMarker.note)}</p>
+                </div>
+              </article>
+            ` : ""}
+            ${markers
               .map(
                 (marker, index) => `
-                  <p>
+                  <button class="${index === activeIndex ? "active" : ""}" type="button" data-action="select-hotspot" data-index="${index}">
                     <span class="mini-icon">${renderIcon(marker.icon || "alert")}</span>
                     <span>
                       <strong>${index + 1}. ${escapeHtml(marker.label)}:</strong>
                       ${escapeHtml(marker.note)}
                     </span>
-                  </p>
+                  </button>
                 `
               )
               .join("")}
@@ -779,13 +839,18 @@
         <div class="learning-visual ppe-grid">
           ${(visual.cards || [])
             .map(
-              (card) => `
-                <article class="ppe-card">
+              (card, index) => {
+                const cardKey = `${block.id}:${index}`;
+                const expanded = Boolean(state.expandedCards[cardKey]);
+                return `
+                <button class="ppe-card ${expanded ? "expanded" : ""}" type="button" data-action="toggle-card" data-card="${escapeHtml(cardKey)}">
                   <span class="visual-icon">${renderIcon(card.icon || "shield")}</span>
                   <strong>${escapeHtml(card.title)}</strong>
                   <p>${escapeHtml(card.text)}</p>
-                </article>
-              `
+                  <small>${expanded ? escapeHtml(card.details || "Проверьте посадку и исправность перед запуском.") : "Нажмите для деталей"}</small>
+                </button>
+              `;
+              }
             )
             .join("")}
         </div>
@@ -817,10 +882,23 @@
         <div class="learning-visual compare-grid">
           <article class="compare-card good">
             <span>Правильно</span>
+            <div class="fixture-illustration good" aria-hidden="true">
+              <i class="fixture-base"></i>
+              <i class="fixture-vise"></i>
+              <i class="fixture-part"></i>
+              <i class="fixture-drill"></i>
+            </div>
             ${(visual.good || []).map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
           </article>
           <article class="compare-card bad">
             <span>Неправильно</span>
+            <div class="fixture-illustration bad" aria-hidden="true">
+              <i class="fixture-base"></i>
+              <i class="fixture-hand left"></i>
+              <i class="fixture-hand right"></i>
+              <i class="fixture-part"></i>
+              <i class="fixture-drill"></i>
+            </div>
             ${(visual.bad || []).map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
           </article>
         </div>
@@ -961,7 +1039,7 @@
           ${mini.options
             .map(
               (option, index) => `
-                <label class="${miniAnswer !== undefined && index === mini.answer ? "right" : ""} ${
+                <label class="${miniAnswer === index ? "selected" : ""} ${miniAnswer !== undefined && index === mini.answer ? "right" : ""} ${
                 miniAnswer === index && index !== mini.answer ? "wrong" : ""
               }">
                   <input type="radio" name="mini" value="${index}" ${miniAnswer === index ? "checked" : ""}>
@@ -1208,7 +1286,7 @@
           ${
             result.passed
               ? `<button class="btn primary" type="button" data-action="open-certificate">Открыть сертификат</button>
-                 <a class="btn secondary" href="${window.SafetyExport.buildMailto(result)}">Отправить уведомление по ОТ</a>`
+                 <button class="btn secondary" type="button" data-action="send-ot-confirm">Уведомить ОТ</button>`
               : '<button class="btn primary" type="button" data-action="retry-test">Повторить тест</button>'
           }
           <button class="btn ghost" type="button" data-action="go" data-view="learning">Вернуться к обучению</button>
@@ -1225,6 +1303,7 @@
     }
 
     app.innerHTML = `
+      ${renderSteps("certificate")}
       <section class="certificate-screen">
         <div class="certificate-toolbar no-print">
           <div>
@@ -1232,9 +1311,10 @@
             <h2>${escapeHtml(result.employeeName)}</h2>
           </div>
           <div class="toolbar-actions">
-            <button class="btn primary" type="button" data-action="print-certificate">Скачать / распечатать сертификат</button>
-            <a class="btn secondary" href="${window.SafetyExport.buildMailto(result)}">Отправить уведомление по ОТ</a>
-            <button class="btn ghost" type="button" data-action="go" data-view="home">На главный экран</button>
+            <button class="btn primary" type="button" data-action="download-pdf">Скачать PDF</button>
+            <button class="btn secondary" type="button" data-action="share-certificate">Поделиться</button>
+            <button class="btn secondary" type="button" data-action="send-ot-confirm">Уведомить ОТ</button>
+            <button class="btn ghost" type="button" data-action="go" data-view="home">На главную</button>
           </div>
         </div>
         ${window.SafetyCertificate.buildCertificateHTML(result)}
@@ -1482,6 +1562,20 @@
       return;
     }
 
+    if (action === "select-hotspot") {
+      const block = currentLearningBlock();
+      state.activeHotspots[block.id] = Number(target.dataset.index);
+      renderLearning();
+      return;
+    }
+
+    if (action === "toggle-card") {
+      const key = target.dataset.card;
+      state.expandedCards[key] = !state.expandedCards[key];
+      renderLearning();
+      return;
+    }
+
     if (action === "toggle-check") {
       const key = target.dataset.check;
       state.checklistTicks[key] = !state.checklistTicks[key];
@@ -1562,6 +1656,42 @@
 
     if (action === "print-certificate") {
       window.SafetyCertificate.printCertificate();
+      return;
+    }
+
+    if (action === "download-pdf") {
+      window.SafetyCertificate.printCertificate();
+      return;
+    }
+
+    if (action === "send-ot-confirm") {
+      if (!state.result) {
+        showToast("Сначала сформируйте результат обучения");
+        return;
+      }
+      const ok = window.confirm("Открыть письмо для отправки уведомления по охране труда?");
+      if (ok) {
+        window.location.href = window.SafetyExport.buildMailto(state.result);
+      }
+      return;
+    }
+
+    if (action === "share-certificate") {
+      if (!state.result) {
+        showToast("Сертификат пока не сформирован");
+        return;
+      }
+      const shareText = `Сертификат ${state.result.certificateId}: ${state.result.employeeName}, ${state.result.percent}%`;
+      if (navigator.share) {
+        navigator.share({
+          title: "Сертификат OT-JULE",
+          text: shareText
+        }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareText).then(() => showToast("Данные сертификата скопированы"));
+      } else {
+        showToast(shareText);
+      }
       return;
     }
 
