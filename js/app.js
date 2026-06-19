@@ -27,6 +27,7 @@
     learningIndex: 0,
     visitedLearning: new Set(),
     miniAnswers: {},
+    activeTabs: {},
     testAnswers: {},
     result: null,
     journalFilters: {
@@ -489,6 +490,109 @@
     }[riskClass] || "risk-medium";
   }
 
+  function renderIcon(name) {
+    const icons = {
+      rotate:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3v4h-4"/><path d="M7 21v-4h4"/><path d="M18.6 8.7A7 7 0 0 0 6.3 6"/><path d="M5.4 15.3A7 7 0 0 0 17.7 18"/></svg>',
+      chips:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 15 5-2 2 5-5 2Z"/><path d="m13 4 6 3-3 6-6-3Z"/><path d="m15 16 4 1-1 4-4-1Z"/></svg>',
+      bolt:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-8 12h6l-1 8 8-12h-6Z"/></svg>',
+      shield:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v6c0 4.5 2.8 7.5 7 9 4.2-1.5 7-4.5 7-9V6Z"/><path d="m9 12 2 2 4-5"/></svg>',
+      eye:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>',
+      suit:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l3 4-3 3v11H8V10L5 7Z"/><path d="M10 3v5l2 2 2-2V3"/></svg>',
+      shoe:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14c4 0 6-2 8-5l3 4 5 2v3H4Z"/><path d="M4 18h16"/></svg>',
+      check:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>',
+      wrench:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5L10 21H5v-5Z"/><path d="m13 8 3 3"/></svg>',
+      clamp:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4H7Z"/><path d="M9 8v12"/><path d="M15 8v12"/><path d="M6 20h12"/><path d="M8 13h8"/></svg>',
+      stop:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8Z"/><path d="M9 9l6 6"/><path d="m15 9-6 6"/></svg>',
+      fire:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4 0 7-3 7-7 0-3-2-5-4-7 .2 2-.5 3.3-1.6 4.3C13.6 8.5 11 5.8 8 3c.4 4-3 6-3 11 0 4.4 3 8 7 8Z"/></svg>',
+      alert:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20Z"/><path d="M12 9v5"/><path d="M12 17h.01"/></svg>',
+      clean:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h14"/><path d="m8 19 1-8h6l1 8"/><path d="M10 11V5h4v6"/><path d="M7 5h10"/></svg>'
+    };
+    return icons[name] || icons.check;
+  }
+
+  function renderLearningTabs(block) {
+    const tabs = block.visual?.tabs || [];
+    if (!tabs.length) {
+      return "";
+    }
+
+    const activeIndex = state.activeTabs[block.id] ?? 0;
+    const activeTab = tabs[activeIndex] || tabs[0];
+
+    return `
+      <section class="learning-tabs" aria-label="Дополнительные акценты">
+        <div class="tabs-list" role="tablist">
+          ${tabs
+            .map(
+              (tab, index) => `
+                <button class="${index === activeIndex ? "active" : ""}" type="button" role="tab" data-action="select-tab" data-block="${escapeHtml(block.id)}" data-tab="${index}">
+                  ${escapeHtml(tab.label)}
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+        <article class="tab-panel" role="tabpanel">
+          <span>${escapeHtml(activeTab.kicker || "Акцент")}</span>
+          <strong>${escapeHtml(activeTab.title)}</strong>
+          <p>${escapeHtml(activeTab.text)}</p>
+        </article>
+      </section>
+    `;
+  }
+
+  function renderLearningAccordion(block) {
+    const items = block.visual?.accordion || [];
+    if (!items.length) {
+      return "";
+    }
+
+    return `
+      <section class="learning-accordion" aria-label="Раскрывающиеся детали">
+        ${items
+          .map(
+            (item, index) => `
+              <details ${index === 0 ? "open" : ""}>
+                <summary>${escapeHtml(item.title)}</summary>
+                <p>${escapeHtml(item.text)}</p>
+              </details>
+            `
+          )
+          .join("")}
+      </section>
+    `;
+  }
+
+  function renderLearningInteraction(block) {
+    const tabs = renderLearningTabs(block);
+    const accordion = renderLearningAccordion(block);
+
+    if (!tabs && !accordion) {
+      return "";
+    }
+
+    return `
+      <div class="learning-module-interaction">
+        ${tabs}
+        ${accordion}
+      </div>
+    `;
+  }
+
   function renderBlockVisual(block) {
     const visual = block.visual || {};
 
@@ -496,6 +600,7 @@
       return `
         <div class="learning-visual hazard-map-visual">
           <div class="machine-map" aria-label="Схема опасных зон станка">
+            <div class="machine-glow"></div>
             <div class="machine-head"></div>
             <div class="machine-spindle"></div>
             <div class="machine-table"></div>
@@ -513,7 +618,17 @@
           </div>
           <div class="hotspot-list">
             ${(visual.markers || [])
-              .map((marker, index) => `<p><strong>${index + 1}. ${escapeHtml(marker.label)}:</strong> ${escapeHtml(marker.note)}</p>`)
+              .map(
+                (marker, index) => `
+                  <p>
+                    <span class="mini-icon">${renderIcon(marker.icon || "alert")}</span>
+                    <span>
+                      <strong>${index + 1}. ${escapeHtml(marker.label)}:</strong>
+                      ${escapeHtml(marker.note)}
+                    </span>
+                  </p>
+                `
+              )
               .join("")}
           </div>
         </div>
@@ -523,7 +638,18 @@
     if (block.visualType === "checklist") {
       return `
         <div class="learning-visual checklist-grid">
-          ${(visual.items || []).map((item) => `<div class="check-card"><span></span><strong>${escapeHtml(item)}</strong></div>`).join("")}
+          ${(visual.items || [])
+            .map((item) => {
+              const value = typeof item === "string" ? { title: item, icon: "check" } : item;
+              return `
+                <div class="check-card">
+                  <span>${renderIcon(value.icon || "check")}</span>
+                  <strong>${escapeHtml(value.title)}</strong>
+                  ${value.text ? `<p>${escapeHtml(value.text)}</p>` : ""}
+                </div>
+              `;
+            })
+            .join("")}
         </div>
       `;
     }
@@ -535,7 +661,7 @@
             .map(
               (card) => `
                 <article class="ppe-card">
-                  <span>${escapeHtml(card.icon)}</span>
+                  <span class="visual-icon">${renderIcon(card.icon || "shield")}</span>
                   <strong>${escapeHtml(card.title)}</strong>
                   <p>${escapeHtml(card.text)}</p>
                 </article>
@@ -553,7 +679,7 @@
             .map(
               (check) => `
                 <article>
-                  <span class="inspection-dot"></span>
+                  <span class="inspection-dot">${renderIcon(check.icon || "check")}</span>
                   <div>
                     <strong>${escapeHtml(check.title)}</strong>
                     <p>${escapeHtml(check.status)}</p>
@@ -581,10 +707,40 @@
       `;
     }
 
+    if (block.visualType === "flow") {
+      return `
+        <div class="learning-visual flow-visual">
+          ${(visual.steps || [])
+            .map(
+              (step, index) => `
+                <article>
+                  <span class="flow-index">${index + 1}</span>
+                  <div class="visual-icon">${renderIcon(step.icon || "check")}</div>
+                  <strong>${escapeHtml(step.title)}</strong>
+                  <p>${escapeHtml(step.text)}</p>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      `;
+    }
+
     if (block.visualType === "forbidden") {
       return `
         <div class="learning-visual forbidden-grid">
-          ${(visual.cards || []).map((item) => `<article><span></span><strong>${escapeHtml(item)}</strong></article>`).join("")}
+          ${(visual.cards || [])
+            .map((item) => {
+              const value = typeof item === "string" ? { title: item, icon: "stop" } : item;
+              return `
+                <article>
+                  <span>${renderIcon(value.icon || "stop")}</span>
+                  <strong>${escapeHtml(value.title)}</strong>
+                  ${value.text ? `<p>${escapeHtml(value.text)}</p>` : ""}
+                </article>
+              `;
+            })
+            .join("")}
         </div>
       `;
     }
@@ -596,6 +752,7 @@
             .map(
               (scenario) => `
                 <article>
+                  <span class="visual-icon">${renderIcon(scenario.icon || "alert")}</span>
                   <strong>${escapeHtml(scenario.title)}</strong>
                   <p>${escapeHtml(scenario.action)}</p>
                 </article>
@@ -608,15 +765,20 @@
 
     if (block.visualType === "algorithm") {
       return `
-        <div class="learning-visual algorithm-steps">
+        <div class="learning-visual algorithm-steps timeline-visual">
           ${(visual.steps || [])
             .map(
-              (step, index) => `
+              (step, index) => {
+                const value = typeof step === "string" ? { title: step, icon: "check" } : step;
+                return `
                 <article>
                   <span>${index + 1}</span>
-                  <strong>${escapeHtml(step)}</strong>
+                  <div class="visual-icon">${renderIcon(value.icon || "check")}</div>
+                  <strong>${escapeHtml(value.title)}</strong>
+                  ${value.text ? `<p>${escapeHtml(value.text)}</p>` : ""}
                 </article>
-              `
+              `;
+              }
             )
             .join("")}
         </div>
@@ -626,7 +788,17 @@
     if (block.visualType === "finish") {
       return `
         <div class="learning-visual finish-grid">
-          ${(visual.items || []).map((item) => `<article><span></span><strong>${escapeHtml(item)}</strong></article>`).join("")}
+          ${(visual.items || [])
+            .map((item) => {
+              const value = typeof item === "string" ? { title: item, icon: "check" } : item;
+              return `
+                <article>
+                  <span>${renderIcon(value.icon || "check")}</span>
+                  <strong>${escapeHtml(value.title)}</strong>
+                </article>
+              `;
+            })
+            .join("")}
         </div>
       `;
     }
@@ -682,12 +854,12 @@
 
     app.innerHTML = `
       ${renderSteps("learning")}
-      <section class="learning-screen">
+      <section class="learning-screen" style="--learning-progress:${progress}%">
         <div class="learning-header">
           <div>
             <p class="eyebrow">Интерактивное обучение</p>
             <h2>${escapeHtml(block.title)}</h2>
-            <p>${escapeHtml(block.lead)}</p>
+            <p class="key-thought">${escapeHtml(block.lead)}</p>
           </div>
           <div class="risk-meter ${badgeClassForRisk(block.riskClass)}">
             <span>Уровень риска</span>
@@ -705,6 +877,16 @@
           <div class="progress-bar"><span style="width:${progress}%"></span></div>
         </div>
 
+        <div class="learning-mini-stepper" aria-label="Прогресс обучающих модулей">
+          ${blocks
+            .map(
+              (item, index) => `
+                <span class="${index === state.learningIndex ? "active" : state.visitedLearning.has(index) ? "seen" : ""}" title="${escapeHtml(item.title)}"></span>
+              `
+            )
+            .join("")}
+        </div>
+
         <article class="learning-card">
           ${renderBlockVisual(block)}
           <div class="learning-points">
@@ -715,6 +897,7 @@
           </div>
         </article>
 
+        ${renderLearningInteraction(block)}
         ${renderMiniQuestion(block)}
 
         <div class="slide-controls no-print">
@@ -1144,6 +1327,12 @@
     if (action === "select-equipment") {
       state.selection.equipmentId = target.dataset.id;
       renderEquipmentSelection();
+      return;
+    }
+
+    if (action === "select-tab") {
+      state.activeTabs[target.dataset.block] = Number(target.dataset.tab);
+      renderLearning();
       return;
     }
 
