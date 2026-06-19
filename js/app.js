@@ -28,6 +28,7 @@
     visitedLearning: new Set(),
     miniAnswers: {},
     activeTabs: {},
+    checklistTicks: {},
     testAnswers: {},
     result: null,
     journalFilters: {
@@ -219,6 +220,7 @@
     state.visitedLearning = new Set();
     state.miniAnswers = {};
     state.testAnswers = {};
+    state.checklistTicks = {};
     state.result = null;
   }
 
@@ -490,6 +492,19 @@
     }[riskClass] || "risk-medium";
   }
 
+  function learningBadge(block) {
+    if (block.id === "forbidden-actions") {
+      return { label: "Запрещено", className: "badge-forbidden" };
+    }
+    if (block.id === "emergency-situations" || block.id === "emergency-algorithm") {
+      return { label: "Авария", className: "badge-emergency" };
+    }
+    if (block.riskClass === "critical" || block.riskClass === "high" || block.id === "hazard-map") {
+      return { label: "Опасность", className: "badge-danger" };
+    }
+    return { label: "Обязательно", className: "badge-mandatory" };
+  }
+
   function renderIcon(name) {
     const icons = {
       rotate:
@@ -639,14 +654,15 @@
       return `
         <div class="learning-visual checklist-grid">
           ${(visual.items || [])
-            .map((item) => {
+            .map((item, index) => {
               const value = typeof item === "string" ? { title: item, icon: "check" } : item;
+              const checkKey = `${block.id}:${index}`;
               return `
-                <div class="check-card">
+                <button class="check-card ${state.checklistTicks[checkKey] ? "checked" : ""}" type="button" data-action="toggle-check" data-check="${escapeHtml(checkKey)}">
                   <span>${renderIcon(value.icon || "check")}</span>
                   <strong>${escapeHtml(value.title)}</strong>
                   ${value.text ? `<p>${escapeHtml(value.text)}</p>` : ""}
-                </div>
+                </button>
               `;
             })
             .join("")}
@@ -726,6 +742,25 @@
       `;
     }
 
+    if (block.visualType === "drilling") {
+      return `
+        <div class="learning-visual drilling-timeline">
+          ${(visual.steps || [])
+            .map(
+              (step, index) => `
+                <article>
+                  <span class="drill-index">${index + 1}</span>
+                  <div class="visual-icon">${renderIcon(step.icon || "check")}</div>
+                  <strong>${escapeHtml(step.title)}</strong>
+                  <p>${escapeHtml(step.text)}</p>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      `;
+    }
+
     if (block.visualType === "forbidden") {
       return `
         <div class="learning-visual forbidden-grid">
@@ -764,8 +799,9 @@
     }
 
     if (block.visualType === "algorithm") {
+      const layoutClass = visual.layout === "vertical" ? "vertical" : "";
       return `
-        <div class="learning-visual algorithm-steps timeline-visual">
+        <div class="learning-visual algorithm-steps timeline-visual ${layoutClass}">
           ${(visual.steps || [])
             .map(
               (step, index) => {
@@ -789,13 +825,14 @@
       return `
         <div class="learning-visual finish-grid">
           ${(visual.items || [])
-            .map((item) => {
+            .map((item, index) => {
               const value = typeof item === "string" ? { title: item, icon: "check" } : item;
+              const checkKey = `${block.id}:${index}`;
               return `
-                <article>
+                <button class="${state.checklistTicks[checkKey] ? "checked" : ""}" type="button" data-action="toggle-check" data-check="${escapeHtml(checkKey)}">
                   <span>${renderIcon(value.icon || "check")}</span>
                   <strong>${escapeHtml(value.title)}</strong>
-                </article>
+                </button>
               `;
             })
             .join("")}
@@ -851,13 +888,17 @@
 
     const progress = Math.round(((state.learningIndex + 1) / blocks.length) * 100);
     const allViewed = state.visitedLearning.size === blocks.length;
+    const badge = learningBadge(block);
 
     app.innerHTML = `
       ${renderSteps("learning")}
       <section class="learning-screen" style="--learning-progress:${progress}%">
         <div class="learning-header">
           <div>
-            <p class="eyebrow">Интерактивное обучение</p>
+            <div class="learning-title-row">
+              <p class="eyebrow">Интерактивное обучение</p>
+              <span class="badge ${badge.className}">${badge.label}</span>
+            </div>
             <h2>${escapeHtml(block.title)}</h2>
             <p class="key-thought">${escapeHtml(block.lead)}</p>
           </div>
@@ -1332,6 +1373,13 @@
 
     if (action === "select-tab") {
       state.activeTabs[target.dataset.block] = Number(target.dataset.tab);
+      renderLearning();
+      return;
+    }
+
+    if (action === "toggle-check") {
+      const key = target.dataset.check;
+      state.checklistTicks[key] = !state.checklistTicks[key];
       renderLearning();
       return;
     }

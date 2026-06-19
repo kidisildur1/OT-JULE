@@ -1512,6 +1512,18 @@ body[data-view="home"] .topbar {
   animation: screenEnter 0.32s ease both;
 }
 
+.learning-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.learning-title-row .eyebrow {
+  margin: 0;
+}
+
 .key-thought {
   display: inline-flex;
   max-width: 760px;
@@ -1796,6 +1808,7 @@ body[data-view="home"] .topbar {
 .forbidden-grid article,
 .scenario-grid article,
 .finish-grid article,
+.finish-grid button,
 .memo-grid article,
 .compare-card,
 .process-rail article,
@@ -1807,12 +1820,21 @@ body[data-view="home"] .topbar {
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
+.check-card,
+.finish-grid button {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
 .check-card:hover,
 .ppe-card:hover,
 .inspection-grid article:hover,
 .forbidden-grid article:hover,
 .scenario-grid article:hover,
 .finish-grid article:hover,
+.finish-grid button:hover,
 .memo-grid article:hover,
 .compare-card:hover,
 .flow-visual article:hover,
@@ -1825,14 +1847,30 @@ body[data-view="home"] .topbar {
 .check-card,
 .inspection-grid article,
 .finish-grid article,
+.finish-grid button,
 .forbidden-grid article {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
 
+.check-card.checked,
+.finish-grid button.checked {
+  border-color: rgba(101, 213, 141, 0.46);
+  background: rgba(101, 213, 141, 0.12);
+}
+
+.check-card.checked span,
+.finish-grid button.checked span {
+  color: #041012;
+  border-color: rgba(101, 213, 141, 0.8);
+  background: var(--green);
+  animation: softPulse 0.75s ease;
+}
+
 .check-card span::before,
 .finish-grid article span::before,
+.finish-grid button span::before,
 .inspection-dot::before {
   content: none;
 }
@@ -1847,6 +1885,7 @@ body[data-view="home"] .topbar {
 .check-card p,
 .scenario-grid p,
 .forbidden-grid p,
+.finish-grid p,
 .memo-grid p {
   margin: 7px 0 0;
   color: var(--muted);
@@ -1950,6 +1989,61 @@ body[data-view="home"] .topbar {
   line-height: 1.45;
 }
 
+.drilling-timeline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  align-content: center;
+}
+
+.drilling-timeline::before {
+  content: "";
+  position: absolute;
+  left: 36px;
+  right: 36px;
+  top: 92px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(51, 214, 208, 0.18), rgba(247, 184, 75, 0.58), rgba(51, 214, 208, 0.18));
+}
+
+.drilling-timeline article {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  min-height: 190px;
+  border: 1px solid rgba(51, 214, 208, 0.18);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgba(51, 214, 208, 0.08), rgba(255, 255, 255, 0.035)),
+    rgba(8, 13, 19, 0.72);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.drilling-timeline article:hover {
+  transform: translateY(-2px);
+  border-color: rgba(51, 214, 208, 0.34);
+  background: rgba(51, 214, 208, 0.08);
+}
+
+.drill-index {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #041012;
+  background: var(--amber);
+  font-weight: 900;
+}
+
+.drilling-timeline p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .process-rail,
 .algorithm-steps {
   display: grid;
@@ -2005,6 +2099,40 @@ body[data-view="home"] .topbar {
   margin: 0;
   color: var(--muted);
   line-height: 1.35;
+}
+
+.timeline-visual.vertical {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.timeline-visual.vertical::before {
+  left: 32px;
+  right: auto;
+  top: 22px;
+  bottom: 22px;
+  width: 2px;
+  height: auto;
+  background: linear-gradient(180deg, rgba(255, 99, 99, 0.2), rgba(51, 214, 208, 0.56), rgba(101, 213, 141, 0.24));
+}
+
+.timeline-visual.vertical article {
+  min-height: 84px;
+  grid-template-columns: 36px 38px minmax(0, 1fr);
+  align-items: center;
+}
+
+.timeline-visual.vertical article strong,
+.timeline-visual.vertical article p {
+  grid-column: 3;
+}
+
+.timeline-visual.vertical article span {
+  grid-row: 1 / span 2;
+}
+
+.timeline-visual.vertical article .visual-icon {
+  grid-row: 1 / span 2;
 }
 
 .forbidden-grid article {
@@ -2180,11 +2308,13 @@ body[data-view="home"] .topbar {
   }
 
   .process-rail,
+  .drilling-timeline,
   .algorithm-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .timeline-visual::before,
+  .drilling-timeline::before,
   .flow-visual article::after {
     display: none;
   }
@@ -2254,8 +2384,22 @@ body[data-view="home"] .topbar {
   }
 
   .process-rail,
+  .drilling-timeline,
   .algorithm-steps {
     grid-template-columns: 1fr;
+  }
+
+  .timeline-visual.vertical article {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .timeline-visual.vertical article .visual-icon {
+    display: none;
+  }
+
+  .timeline-visual.vertical article strong,
+  .timeline-visual.vertical article p {
+    grid-column: 2;
   }
 
   .slide-top {
