@@ -106,6 +106,18 @@
     }[type] || "building";
   }
 
+  function organizationDescription(organization) {
+    return {
+      rusniti: "готовый модуль",
+      "ic-tmk": "каталог создан"
+    }[organization.id] || "структура проекта";
+  }
+
+  function unitDescription(unit) {
+    const hasReady = (unit.equipment || []).some((equipment) => equipment.status === "ready");
+    return hasReady ? "ИОТ-47 доступна" : "модуль готовится";
+  }
+
   function statusText(equipment) {
     if (!equipment) {
       return "Обучающий модуль в разработке";
@@ -197,16 +209,20 @@
       ["certificate", "Сертификат"]
     ];
     const activeIndex = steps.findIndex(([id]) => id === active);
+    const progress = Math.max(0, Math.round(((activeIndex + 1) / steps.length) * 100));
 
     return `
-      <ol class="stepper compact no-print" aria-label="Этапы обучения">
-        ${steps
-          .map(([id, label], index) => {
-            const status = index < activeIndex ? "done" : index === activeIndex ? "active" : "";
-            return `<li class="${status}"><span>${index + 1}</span>${escapeHtml(label)}</li>`;
-          })
-          .join("")}
-      </ol>
+      <div class="journey-stepper no-print" style="--journey-progress:${progress}%">
+        <div class="journey-progress" aria-hidden="true"><span></span></div>
+        <ol class="stepper compact" aria-label="Этапы обучения">
+          ${steps
+            .map(([id, label], index) => {
+              const status = index < activeIndex ? "done" : index === activeIndex ? "active" : "";
+              return `<li class="${status}"><span>${index + 1}</span>${escapeHtml(label)}</li>`;
+            })
+            .join("")}
+        </ol>
+      </div>
     `;
   }
 
@@ -273,16 +289,42 @@
   }
 
   function renderHome() {
+    const benefits = [
+      { icon: "clock", title: "Быстрое обучение", text: "по модулю ИОТ-47" },
+      { icon: "quiz", title: "Контроль знаний", text: "проходной балл 80%" },
+      { icon: "certificate", title: "Сертификаты", text: "печать и журнал" }
+    ];
+
     app.innerHTML = `
       <section class="hero employee-home minimal-home">
         <div class="hero-bg" aria-hidden="true"></div>
         <div class="hero-content">
+          <p class="hero-kicker">Индустриальное обучение по ОТ</p>
           <h1>${escapeHtml(data.project.title)}</h1>
           <p>${escapeHtml(data.project.subtitle)}</p>
+          <p class="hero-slogan">Инструктаж, тест и сертификат в одном маршруте.</p>
+          <div class="home-benefits" aria-label="Преимущества обучения">
+            ${benefits
+              .map(
+                (item) => `
+                  <article>
+                    <span>${renderIcon(item.icon)}</span>
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <small>${escapeHtml(item.text)}</small>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>
           <div class="hero-actions single-action">
             <button class="btn primary" type="button" data-action="go" data-view="identity">Пройти обучение</button>
           </div>
         </div>
+        <aside class="hero-module-card" aria-label="Активный модуль">
+          <span>Активный модуль</span>
+          <strong>Hitachi B16RM</strong>
+          <p>вращение · стружка · электрика</p>
+        </aside>
       </section>
 
       <div class="home-admin-footer no-print">
@@ -301,25 +343,41 @@
           <p>Эти данные попадут в сертификат и уведомление по охране труда.</p>
         </div>
 
-        <form class="form-panel identity-panel" id="identityForm">
+        <form class="form-panel identity-panel" id="identityForm" novalidate>
           <div class="form-row">
-            <label>
+            <label class="field-card">
               <span>ФИО</span>
-              <input name="employeeName" value="${escapeHtml(state.employee.name)}" autocomplete="name" required placeholder="Фамилия Имя Отчество">
+              <div class="input-shell">
+                <i>${renderIcon("user")}</i>
+                <input name="employeeName" aria-label="ФИО" value="${escapeHtml(state.employee.name)}" autocomplete="name" required autofocus placeholder="Фамилия Имя Отчество">
+              </div>
+              <small>для сертификата</small>
             </label>
-            <label>
+            <label class="field-card">
               <span>Табельный номер</span>
-              <input name="tabNumber" value="${escapeHtml(state.employee.tabNumber)}" required placeholder="0000">
+              <div class="input-shell">
+                <i>${renderIcon("id")}</i>
+                <input name="tabNumber" aria-label="Табельный номер" value="${escapeHtml(state.employee.tabNumber)}" inputmode="numeric" required placeholder="0000">
+              </div>
+              <small>для журнала</small>
             </label>
           </div>
           <div class="form-row">
-            <label>
+            <label class="field-card">
               <span>Должность</span>
-              <input name="position" value="${escapeHtml(state.employee.position)}" required placeholder="инженер-испытатель">
+              <div class="input-shell">
+                <i>${renderIcon("briefcase")}</i>
+                <input name="position" aria-label="Должность" value="${escapeHtml(state.employee.position)}" required placeholder="инженер-испытатель">
+              </div>
+              <small>для уведомления</small>
             </label>
-            <label>
+            <label class="field-card">
               <span>E-mail, если есть</span>
-              <input name="email" type="email" value="${escapeHtml(state.employee.email)}" placeholder="name@example.com">
+              <div class="input-shell">
+                <i>${renderIcon("mail")}</i>
+                <input name="email" aria-label="E-mail, если есть" type="email" value="${escapeHtml(state.employee.email)}" placeholder="name@example.com">
+              </div>
+              <small>необязательно</small>
             </label>
           </div>
           <div class="form-actions">
@@ -332,6 +390,7 @@
 
     document.getElementById("identityForm").addEventListener("submit", (event) => {
       event.preventDefault();
+      event.currentTarget.querySelectorAll(".field-card").forEach((field) => field.classList.remove("is-invalid"));
       const formData = new FormData(event.currentTarget);
       state.employee = {
         name: String(formData.get("employeeName") || "").trim(),
@@ -341,11 +400,24 @@
       };
 
       if (!state.employee.name || !state.employee.tabNumber || !state.employee.position) {
+        event.currentTarget.querySelectorAll("input[required]").forEach((input) => {
+          if (!input.value.trim()) {
+            input.closest(".field-card")?.classList.add("is-invalid");
+          }
+        });
+        const firstInvalid = event.currentTarget.querySelector(".field-card.is-invalid input");
+        if (firstInvalid) {
+          firstInvalid.focus();
+        }
         showToast("Заполните ФИО, табельный номер и должность");
         return;
       }
 
       setView("unit");
+    });
+
+    document.getElementById("identityForm").querySelectorAll("input[required]").forEach((input) => {
+      input.addEventListener("input", () => input.closest(".field-card")?.classList.remove("is-invalid"));
     });
   }
 
@@ -377,6 +449,7 @@
                     <span class="selection-icon">${renderIcon("building")}</span>
                     <span class="choice-type">Организация</span>
                     <strong>${escapeHtml(item.name)}</strong>
+                    <p>${escapeHtml(organizationDescription(item))}</p>
                     <small>${item.children.length} направлений</small>
                   </button>
                 `
@@ -402,6 +475,7 @@
                     <span class="selection-icon">${renderIcon(typeIcon(unit.type))}</span>
                     <span class="choice-type">${escapeHtml(typeLabel(unit.type))}</span>
                     <strong>${escapeHtml(unit.name)}</strong>
+                    <p>${escapeHtml(unitDescription(unit))}</p>
                     <small>${hasReady ? "есть готовый модуль" : "модуль в разработке"}</small>
                   </button>
                 `;
@@ -686,9 +760,57 @@
       sector:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/><path d="M8 5v14"/><path d="M16 5v14"/></svg>',
       center:
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M3 12h18"/><path d="m6 6 12 12"/><path d="m18 6-12 12"/></svg>'
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M3 12h18"/><path d="m6 6 12 12"/><path d="m18 6-12 12"/></svg>',
+      user:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
+      id:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h4"/><path d="M7 12h5"/><path d="M15 12h2"/><path d="M15 16h2"/></svg>',
+      briefcase:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v1"/><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 12h18"/></svg>',
+      mail:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+      clock:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+      quiz:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9a3 3 0 1 1 5 2.2c-1 .7-2 1.3-2 2.8"/><path d="M12 18h.01"/><path d="M4 4h16v16H4Z"/></svg>',
+      certificate:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6"/><path d="M9 12h6"/></svg>'
     };
     return icons[name] || icons.check;
+  }
+
+  function pointIcon(block, index) {
+    const byType = {
+      "hazard-map": ["rotate", "chips", "clamp", "bolt", "alert"],
+      checklist: ["check", "shield", "eye", "wrench", "clamp"],
+      ppe: ["suit", "eye", "check", "shield"],
+      inspection: ["rotate", "wrench", "stop", "bolt", "shield"],
+      compare: ["clamp", "check", "stop", "alert"],
+      drilling: ["check", "clamp", "rotate", "alert", "eye"],
+      forbidden: ["stop", "stop", "wrench", "eye", "alert"],
+      scenarios: ["fire", "bolt", "alert", "wrench", "shield"],
+      algorithm: ["stop", "bolt", "user", "shield", "alert"],
+      finish: ["bolt", "clean", "wrench", "chips", "check"]
+    };
+    return (byType[block.visualType] || ["check"])[index] || "check";
+  }
+
+  function renderLearningPoints(block) {
+    return `
+      <div class="learning-point-grid" aria-label="Ключевые тезисы">
+        ${block.points
+          .slice(0, 5)
+          .map(
+            (item, index) => `
+              <article>
+                <span>${renderIcon(pointIcon(block, index))}</span>
+                <p>${escapeHtml(item)}</p>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
   }
 
   function renderLearningTabs(block) {
@@ -1034,7 +1156,13 @@
     const miniAnswer = state.miniAnswers[block.id];
     return `
       <form class="mini-question" id="miniQuestion">
-        <strong>${escapeHtml(mini.question)}</strong>
+        <div class="mini-question-head">
+          <span>${renderIcon("quiz")}</span>
+          <div>
+            <small>Мини-вопрос</small>
+            <strong>${escapeHtml(mini.question)}</strong>
+          </div>
+        </div>
         <div class="option-list">
           ${mini.options
             .map(
@@ -1115,9 +1243,7 @@
           ${renderBlockVisual(block)}
           <div class="learning-points">
             <h3>Запомнить</h3>
-            <ul class="safety-list">
-              ${block.points.slice(0, 5).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-            </ul>
+            ${renderLearningPoints(block)}
           </div>
         </article>
 
@@ -1681,14 +1807,16 @@
         showToast("Сертификат пока не сформирован");
         return;
       }
+      const shareUrl = window.location.href.split("#")[0];
       const shareText = `Сертификат ${state.result.certificateId}: ${state.result.employeeName}, ${state.result.percent}%`;
       if (navigator.share) {
         navigator.share({
           title: "Сертификат OT-JULE",
-          text: shareText
+          text: shareText,
+          url: shareUrl
         }).catch(() => {});
       } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(shareText).then(() => showToast("Данные сертификата скопированы"));
+        navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => showToast("Ссылка на сертификат скопирована"));
       } else {
         showToast(shareText);
       }
