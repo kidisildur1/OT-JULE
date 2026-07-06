@@ -396,47 +396,75 @@
   }
 
   function renderHome() {
-    const benefits = [
-      { icon: "clock", title: "Быстрое обучение", text: "по модулю ИОТ-47" },
-      { icon: "quiz", title: "Контроль знаний", text: "проходной балл 80%" },
-      { icon: "certificate", title: "Сертификаты", text: "печать и журнал" }
+    const steps = [
+      { icon: "play", title: "Видео", text: "короткий вводный блок" },
+      { icon: "shield", title: "Карточки правил", text: "риски, запреты и СИЗ" },
+      { icon: "quiz", title: "Проверка знаний", text: "вопросы по ключевым действиям" },
+      { icon: "certificate", title: "QR-сертификат", text: "подтверждение допуска" }
     ];
 
     app.innerHTML = `
-      <section class="hero employee-home minimal-home">
-        <div class="hero-bg" aria-hidden="true"></div>
-        <div class="hero-content">
-          <p class="hero-kicker">Индустриальное обучение по ОТ</p>
-          <h1>${escapeHtml(data.project.title)}</h1>
-          <p>${escapeHtml(data.project.subtitle)}</p>
-          <p class="hero-slogan">Инструктаж, тест и сертификат в одном маршруте.</p>
-          <div class="home-benefits" aria-label="Преимущества обучения">
-            ${benefits
+      <section class="welcome-screen">
+        <div class="welcome-hero">
+          <div class="welcome-hero-bg" aria-hidden="true"></div>
+          <div class="welcome-copy">
+            <p class="welcome-badge">ИЦ ТМК · цифровой инструктаж</p>
+            <h1>Инструктаж по охране труда</h1>
+            <p class="welcome-lead">Пройдите инструктаж, проверьте знания и получите подтверждение допуска</p>
+            <div class="welcome-actions">
+              <button class="btn primary welcome-main-btn" type="button" data-action="go" data-view="identity">Начать инструктаж</button>
+            </div>
+          </div>
+          <div class="welcome-status-card" aria-label="Маршрут инструктажа">
+            <span>Маршрут</span>
+            <strong>Видео → правила → тест → сертификат</strong>
+            <p>Единый путь для подтверждения допуска к безопасной работе.</p>
+          </div>
+        </div>
+
+        <div class="scenario-grid" aria-label="Выбор сценария инструктажа">
+          <article class="scenario-card guest">
+            <div class="scenario-icon">${renderIcon("user")}</div>
+            <div>
+              <span>Сценарий</span>
+              <h2>Гость</h2>
+              <p>Краткий вводный инструктаж для посещения территории</p>
+            </div>
+            <button class="btn secondary" type="button" data-action="go" data-view="identity">Пройти как гость</button>
+          </article>
+
+          <article class="scenario-card employee">
+            <div class="scenario-icon">${renderIcon("building")}</div>
+            <div>
+              <span>Сценарий</span>
+              <h2>Сотрудник</h2>
+              <p>Инструктаж по подразделению, лаборатории и установке</p>
+            </div>
+            <button class="btn primary" type="button" data-action="go" data-view="identity">Выбрать подразделение</button>
+          </article>
+        </div>
+
+        <section class="instruction-flow" aria-label="Как проходит инструктаж">
+          <div class="instruction-flow-head">
+            <span>Как проходит инструктаж</span>
+            <strong>Понятный маршрут без лишней служебной информации</strong>
+          </div>
+          <div class="instruction-flow-grid">
+            ${steps
               .map(
-                (item) => `
+                (item, index) => `
                   <article>
+                    <i>${index + 1}</i>
                     <span>${renderIcon(item.icon)}</span>
                     <strong>${escapeHtml(item.title)}</strong>
-                    <small>${escapeHtml(item.text)}</small>
+                    <p>${escapeHtml(item.text)}</p>
                   </article>
                 `
               )
               .join("")}
           </div>
-          <div class="hero-actions single-action">
-            <button class="btn primary" type="button" data-action="go" data-view="identity">Пройти обучение</button>
-          </div>
-        </div>
-        <aside class="hero-module-card" aria-label="Активный модуль">
-          <span>Активный модуль</span>
-          <strong>Hitachi B16RM</strong>
-          <p>вращение · стружка · электрика</p>
-        </aside>
+        </section>
       </section>
-
-      <div class="home-admin-footer no-print">
-        <button class="admin-link" type="button" data-action="go" data-view="admin">служебный доступ</button>
-      </div>
     `;
   }
 
@@ -975,6 +1003,8 @@
         '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
       clock:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+      play:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg>',
       quiz:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9a3 3 0 1 1 5 2.2c-1 .7-2 1.3-2 2.8"/><path d="M12 18h.01"/><path d="M4 4h16v16H4Z"/></svg>',
       certificate:
