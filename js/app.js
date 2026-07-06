@@ -41,6 +41,113 @@
     }
   };
 
+  const LEARNING_BRIEFINGS = {
+    "hazard-map": {
+      cards: [
+        { tone: "risk", label: "Высокий риск", title: "Зона вращения", text: "Патрон, сверло и ключи держим вне контакта с руками, одеждой и СИЗ." },
+        { tone: "ppe", label: "СИЗ", title: "Глаза защищены", text: "Очки или лицевой щиток надеваются до подхода к станку." },
+        { tone: "forbidden", label: "Запрещено", title: "Руки у патрона", text: "Не тормозить, не направлять и не поправлять детали руками." }
+      ],
+      summary: ["Опасную зону определяем до запуска.", "Все действия руками выполняем только после полной остановки.", "Электрика и крепление проверяются заранее."],
+      miniQuestion: {
+        question: "Где нельзя держать руки и предметы?",
+        options: ["в зоне патрона, сверла и стружки", "только рядом с кнопкой пуска", "только у стойки станка", "на безопасном расстоянии от вращения"],
+        answer: 0,
+        feedback: "Руки, одежда, ключи и предметы держат вне зоны патрона, сверла и отлета стружки."
+      }
+    },
+    "admission-checklist": {
+      cards: [
+        { tone: "required", label: "Обязательно", title: "Допуск подтвержден", text: "Работать можно только после обучения, инструктажа и задания." },
+        { tone: "warning", label: "Важно", title: "Сомнение = стоп", text: "Если допуск или задание неясны, работу не начинаем." },
+        { tone: "ppe", label: "СИЗ", title: "Проверка до пуска", text: "СИЗ, рабочее место и крепление проверяются до включения." }
+      ],
+      summary: ["Нет допуска — нет работы.", "Перед запуском проверяется весь контур: человек, место, станок, деталь.", "Неясную ситуацию уточняем у руководителя."],
+      miniQuestion: {
+        question: "Что делать, если нет допуска или задания?",
+        options: ["начать на малых оборотах", "не приступать и уточнить у руководителя", "попросить коллегу включить станок", "пройти только видео"],
+        answer: 1,
+        feedback: "Без допуска, задания и понимания операции работать на станке нельзя."
+      }
+    },
+    "ppe-cards": {
+      cards: [
+        { tone: "ppe", label: "СИЗ", title: "Очки / щиток", text: "Защита глаз обязательна до начала работы." },
+        { tone: "required", label: "Обязательно", title: "Одежда без свободных концов", text: "Манжеты застегнуты, шнуры и края убраны." },
+        { tone: "warning", label: "Важно", title: "Повреждение = замена", text: "Порванные, грязные или неисправные СИЗ не используют." }
+      ],
+      summary: ["СИЗ надеваются до подхода к станку.", "Свободные элементы одежды убираются.", "Поврежденные СИЗ заменяются до начала работы."],
+      miniQuestion: {
+        question: "Что обязательно до подхода к станку?",
+        options: ["только проверить заготовку", "очки или щиток, спецодежда, спецобувь и исправные СИЗ", "снять очки для лучшего обзора", "надеть свободную одежду поверх СИЗ"],
+        answer: 1,
+        feedback: "Перед работой нужны исправные СИЗ: защита глаз, спецодежда, спецобувь и убранные свободные элементы."
+      }
+    },
+    "machine-check": {
+      cards: [
+        { tone: "risk", label: "Высокий риск", title: "Электрика", text: "Кабель, кнопки, корпус и заземление осматриваются до пуска." },
+        { tone: "warning", label: "Стоп-сигнал", title: "Запах гари / вибрация", text: "При признаках неисправности станок не включают." },
+        { tone: "required", label: "Обязательно", title: "Пуск без нагрузки", text: "Проверка проходит до сверления и без установленной операции." }
+      ],
+      summary: ["Сначала проверка, потом работа.", "Любой дефект — остановка и сообщение руководителю.", "Исправность органов управления важнее скорости операции."]
+    },
+    "part-fixing": {
+      cards: [
+        { tone: "required", label: "Обязательно", title: "Тиски или приспособление", text: "Деталь фиксируется до пуска, а не удерживается рукой." },
+        { tone: "forbidden", label: "Запрещено", title: "Ключ в патроне", text: "Ключ убирают до включения станка." },
+        { tone: "risk", label: "Высокий риск", title: "Проворот детали", text: "При провороте останавливают станок и исправляют крепление." }
+      ],
+      summary: ["Руки не заменяют крепление.", "Ключ и инструмент убраны до запуска.", "Проворот детали требует остановки."]
+    },
+    "safe-drilling": {
+      cards: [
+        { tone: "required", label: "Шаги", title: "Кернение → крепление → подача", text: "Операция идет по порядку, без рывков и спешки." },
+        { tone: "warning", label: "Важно", title: "Выход сверла", text: "На выходе подачу уменьшают, чтобы снизить заклинивание." },
+        { tone: "risk", label: "Риск", title: "Вибрация", text: "Вибрация означает остановку и повторную проверку крепления." }
+      ],
+      summary: ["Подача плавная, контроль постоянный.", "На выходе сверла усилие снижается.", "Вибрация и необычный звук — повод остановиться."]
+    },
+    "forbidden-actions": {
+      cards: [
+        { tone: "forbidden", label: "Запрещено", title: "Тормозить патрон руками", text: "Остановка выполняется только штатным управлением." },
+        { tone: "forbidden", label: "Запрещено", title: "Крепить на ходу", text: "Любые регулировки — после остановки." },
+        { tone: "warning", label: "Стоп", title: "Неисправность", text: "При дефекте работу не продолжают даже кратковременно." }
+      ],
+      summary: ["Запреты действуют всегда, даже на малых оборотах.", "Регулировка и крепление — только после полной остановки.", "Неисправность останавливает работу."]
+    },
+    "emergency-situations": {
+      cards: [
+        { tone: "warning", label: "Авария", title: "Пожар", text: "Прекратить работу, по возможности отключить питание, вызвать 101/112." },
+        { tone: "risk", label: "Высокий риск", title: "Поражение током", text: "Сначала обесточить, затем помогать без риска для себя." },
+        { tone: "required", label: "Сообщить", title: "Руководитель", text: "Любая нештатная ситуация фиксируется и передается ответственному." }
+      ],
+      summary: ["Сначала убираем источник опасности.", "Помощь не должна создавать новую травму.", "Номера служб: 101, 103, 112."]
+    },
+    "emergency-algorithm": {
+      cards: [
+        { tone: "required", label: "Алгоритм", title: "Стоп → отключить → сообщить", text: "Действия короткие, без лишних перемещений и самодеятельности." },
+        { tone: "warning", label: "Важно", title: "Первая помощь", text: "Помогаем только когда это безопасно для себя и окружающих." },
+        { tone: "summary", label: "Памятка", title: "101 / 103 / 112", text: "Службы вызываются сразу, если есть пожар, травма или угроза жизни." }
+      ],
+      summary: ["Действуй по порядку.", "Не запускай оборудование до разрешения.", "Сохраняй обстановку только если это безопасно."]
+    },
+    "finish-work": {
+      cards: [
+        { tone: "required", label: "Обязательно", title: "Питание отключено", text: "Станок оставляют только в безопасном состоянии." },
+        { tone: "warning", label: "Важно", title: "Стружка убрана", text: "Уборка выполняется безопасным инструментом, не руками." },
+        { tone: "summary", label: "Передать", title: "Замечания руководителю", text: "Неисправности и отклонения сообщаются до завершения смены." }
+      ],
+      summary: ["Отключить питание.", "Убрать инструмент, заготовки и стружку.", "Передать замечания руководителю."],
+      miniQuestion: {
+        question: "Что нужно передать руководителю после работы?",
+        options: ["только количество деталей", "неисправности, отклонения и замечания", "личные планы на смену", "ничего, если станок выключен"],
+        answer: 1,
+        feedback: "После работы руководителю передают все неисправности, отклонения и замечания по оборудованию и месту."
+      }
+    }
+  };
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -591,9 +698,41 @@
           <aside class="video-insight-panel">
             <span>В фокусе</span>
             <strong>Вращение · стружка · электрика</strong>
-            <p>Смотрите, где нельзя держать руки и когда нужно остановить станок.</p>
+            <p>Смотрите короткими фрагментами: где опасная зона, какие СИЗ нужны и когда станок нужно остановить.</p>
+            <ul class="video-watchlist">
+              <li>положение рук относительно патрона и сверла</li>
+              <li>куда отлетает стружка и фрагменты</li>
+              <li>что считается стоп-сигналом</li>
+            </ul>
           </aside>
         </div>
+
+        <section class="video-brief-grid" aria-label="Что отследить в видео">
+          <article class="video-brief-card risk">
+            <span>${renderIcon("alert")}</span>
+            <small>Высокий риск</small>
+            <strong>Вращение и захват</strong>
+            <p>Не приближать руки, одежду, ключи и СИЗ к патрону.</p>
+          </article>
+          <article class="video-brief-card ppe">
+            <span>${renderIcon("shield")}</span>
+            <small>СИЗ</small>
+            <strong>Очки / щиток до запуска</strong>
+            <p>Защита глаз нужна до подхода к рабочей зоне.</p>
+          </article>
+          <article class="video-brief-card forbidden">
+            <span>${renderIcon("stop")}</span>
+            <small>Запрещено</small>
+            <strong>Руки у патрона</strong>
+            <p>Не тормозить, не поправлять и не удерживать детали руками.</p>
+          </article>
+          <article class="video-brief-card warning">
+            <span>${renderIcon("bolt")}</span>
+            <small>Стоп-сигнал</small>
+            <strong>Вибрация, запах, провод</strong>
+            <p>При отклонениях остановить работу и сообщить руководителю.</p>
+          </article>
+        </section>
 
         <div class="action-strip no-print">
           <button class="btn ghost" type="button" data-action="go" data-view="equipment">Назад</button>
@@ -718,6 +857,71 @@
           )
           .join("")}
       </div>
+    `;
+  }
+
+  function learningBriefing(block) {
+    return LEARNING_BRIEFINGS[block.id] || {};
+  }
+
+  function briefingToneIcon(tone) {
+    return {
+      required: "check",
+      forbidden: "stop",
+      warning: "alert",
+      risk: "alert",
+      ppe: "shield",
+      summary: "certificate"
+    }[tone] || "check";
+  }
+
+  function renderBriefingCards(block) {
+    const briefing = learningBriefing(block);
+    const cards = block.briefingCards || briefing.cards || [];
+    if (!cards.length) {
+      return "";
+    }
+
+    return `
+      <section class="briefing-card-grid" aria-label="Короткие карточки инструктажа">
+        ${cards
+          .map(
+            (card) => `
+              <article class="briefing-card ${escapeHtml(card.tone || "required")}">
+                <span class="briefing-card-icon">${renderIcon(briefingToneIcon(card.tone))}</span>
+                <div>
+                  <small>${escapeHtml(card.label || "Важно")}</small>
+                  <strong>${escapeHtml(card.title)}</strong>
+                  <p>${escapeHtml(card.text)}</p>
+                </div>
+              </article>
+            `
+          )
+          .join("")}
+      </section>
+    `;
+  }
+
+  function renderSummaryBlock(block) {
+    const briefing = learningBriefing(block);
+    const summary = block.summary || briefing.summary || [];
+    if (!summary.length) {
+      return "";
+    }
+
+    return `
+      <section class="learning-summary" aria-label="Краткий итог блока">
+        <div class="learning-summary-head">
+          <span>${renderIcon("certificate")}</span>
+          <div>
+            <small>Коротко</small>
+            <strong>Что унести из блока</strong>
+          </div>
+        </div>
+        <div class="learning-summary-list">
+          ${summary.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
+        </div>
+      </section>
     `;
   }
 
@@ -1148,7 +1352,7 @@
   }
 
   function renderMiniQuestion(block) {
-    const mini = block.miniQuestion;
+    const mini = block.miniQuestion || learningBriefing(block).miniQuestion;
     if (!mini) {
       return "";
     }
@@ -1220,6 +1424,7 @@
 
         ${renderBreadcrumbs()}
         ${learningMetaCards(block)}
+        ${renderBriefingCards(block)}
 
         <div class="progress-block">
           <div class="progress-meta">
@@ -1248,6 +1453,7 @@
         </article>
 
         ${renderLearningInteraction(block)}
+        ${renderSummaryBlock(block)}
         ${renderMiniQuestion(block)}
 
         <div class="slide-controls no-print">
