@@ -22,6 +22,8 @@
 
 html {
   min-width: 320px;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--bg);
   color: var(--text);
   font-family: Inter, "Segoe UI", Arial, sans-serif;
@@ -31,6 +33,8 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
+  max-width: 100%;
+  overflow-x: clip;
   background:
     linear-gradient(180deg, rgba(8, 11, 15, 0.92), rgba(8, 11, 15, 1)),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 96px),
@@ -38,10 +42,18 @@ body {
   color: var(--text);
 }
 
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
 button,
 input,
 select,
 textarea {
+  min-width: 0;
   font: inherit;
   letter-spacing: 0;
 }
@@ -49,6 +61,34 @@ textarea {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+.app-main,
+.topbar,
+.brand > span,
+.hero,
+.hero-content,
+.screen-grid,
+.screen-heading,
+.form-panel,
+.field-card,
+.choice-stage,
+.selection-card,
+.installation-card,
+.equipment-hero-card,
+.equipment-hero-main,
+.equipment-risk-panel,
+.learning-header,
+.learning-card,
+.learning-visual,
+.learning-module-interaction,
+.journal-tools,
+.admin-reference,
+.module-card,
+.module-outline,
+.certificate-toolbar,
+.certificate-field {
+  min-width: 0;
 }
 
 .app-shell {
@@ -188,6 +228,7 @@ h2,
 h3,
 p {
   margin-top: 0;
+  overflow-wrap: anywhere;
 }
 
 h1 {
@@ -902,13 +943,15 @@ select:focus {
 }
 
 .table-wrap {
-  overflow-x: auto;
+  overflow-x: visible;
+  max-width: 100%;
 }
 
 .journal-table {
   width: 100%;
-  min-width: 1240px;
+  min-width: 0;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .journal-table th,
@@ -919,6 +962,7 @@ select:focus {
   text-align: left;
   vertical-align: top;
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .journal-table th {
@@ -1324,9 +1368,9 @@ body[data-view="home"] .topbar {
   content: "";
   position: absolute;
   top: 50%;
-  right: -12px;
+  right: 0;
   z-index: 2;
-  width: 12px;
+  width: 6px;
   height: 2px;
   background: var(--cyan);
 }
@@ -3342,6 +3386,81 @@ body {
   .certificate-grid {
     grid-template-columns: 1fr;
   }
+
+  .table-wrap {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .journal-table,
+  .journal-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .journal-table thead {
+    display: none;
+  }
+
+  .journal-table tr {
+    display: grid;
+    gap: 9px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(120, 168, 255, 0.16);
+    border-radius: 8px;
+    padding: 12px;
+    background: linear-gradient(180deg, rgba(21, 31, 43, 0.94), rgba(12, 17, 24, 0.96));
+  }
+
+  .journal-table td {
+    display: grid;
+    grid-template-columns: minmax(108px, 0.42fr) minmax(0, 1fr);
+    gap: 8px;
+    border-bottom: 0;
+    padding: 0;
+    font-size: 13px;
+  }
+
+  .journal-table td::before {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.35;
+    text-transform: uppercase;
+    content: "";
+  }
+
+  .journal-table td:nth-child(1)::before { content: "Дата"; }
+  .journal-table td:nth-child(2)::before { content: "ФИО"; }
+  .journal-table td:nth-child(3)::before { content: "Таб. номер"; }
+  .journal-table td:nth-child(4)::before { content: "Должность"; }
+  .journal-table td:nth-child(5)::before { content: "Организация"; }
+  .journal-table td:nth-child(6)::before { content: "Подразделение"; }
+  .journal-table td:nth-child(7)::before { content: "Установка"; }
+  .journal-table td:nth-child(8)::before { content: "Инструкция"; }
+  .journal-table td:nth-child(9)::before { content: "Результат"; }
+  .journal-table td:nth-child(10)::before { content: "ID сертификата"; }
+  .journal-table td:nth-child(11)::before { content: "Действие"; }
+
+  .journal-table td[colspan] {
+    display: block;
+    padding: 14px;
+  }
+
+  .journal-table td[colspan]::before {
+    display: none;
+  }
+
+  .demo-label {
+    width: fit-content;
+    margin: 4px 0 0;
+  }
+
+  .table-action {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 640px) {
@@ -3364,11 +3483,11 @@ body {
   }
 
   h1 {
-    font-size: 42px;
+    font-size: clamp(30px, 9vw, 42px);
   }
 
   h2 {
-    font-size: 30px;
+    font-size: clamp(24px, 7vw, 30px);
   }
 
   .hero p:not(.eyebrow),
