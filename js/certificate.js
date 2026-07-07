@@ -74,6 +74,7 @@
             ${field("Должность", result.position)}
             ${field("Организация", result.organization)}
             ${field("Подразделение", result.department)}
+            ${result.commonBlock ? field("Общий блок отдела", result.commonBlock) : ""}
             ${field("Установка", installation)}
             ${field("Номер инструкции", result.instruction)}
             ${field("Дата прохождения", formatDate(result.date))}

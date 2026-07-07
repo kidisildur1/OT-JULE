@@ -25,6 +25,10 @@
     videoSeen: false,
     videoMissing: false,
     videoCanContinue: false,
+    departmentLearningIndex: 0,
+    visitedDepartmentLearning: new Set(),
+    departmentMiniAnswers: {},
+    departmentCommonComplete: false,
     learningIndex: 0,
     visitedLearning: new Set(),
     miniAnswers: {},
@@ -304,6 +308,21 @@
     return data.modules.find((item) => item.equipmentId === equipment.id) || null;
   }
 
+  function selectedCommonBlocks() {
+    return selectedUnit().commonBlocks || [];
+  }
+
+  function hasDepartmentCommonBlock(unit = selectedUnit()) {
+    return Boolean(unit.commonBlocks && unit.commonBlocks.length);
+  }
+
+  function resetDepartmentProgress() {
+    state.departmentLearningIndex = 0;
+    state.visitedDepartmentLearning = new Set();
+    state.departmentMiniAnswers = {};
+    state.departmentCommonComplete = !hasDepartmentCommonBlock();
+  }
+
   function findReadyPath() {
     for (const organization of data.trainingCatalog) {
       for (const unit of organization.children) {
@@ -436,13 +455,20 @@
   function renderSteps(active) {
     const steps = [
       ["identity", "Данные"],
-      ["unit", "Подразделение"],
+      ["unit", "Подразделение"]
+    ];
+
+    if (hasDepartmentCommonBlock()) {
+      steps.push(["department-learning", "Общий блок"]);
+    }
+
+    steps.push(
       ["equipment", "Установка"],
       ["video", "Видео"],
       ["learning", "Обучение"],
       ["test", "Тест"],
       ["certificate", "Сертификат"]
-    ];
+    );
     const activeIndex = steps.findIndex(([id]) => id === active);
     const progress = Math.max(0, Math.round(((activeIndex + 1) / steps.length) * 100));
 
@@ -698,6 +724,8 @@
 
   function renderUnitSelection() {
     const organization = selectedOrganization();
+    const unit = selectedUnit();
+    const needsCommonBlock = hasDepartmentCommonBlock(unit) && !state.departmentCommonComplete;
 
     app.innerHTML = `
       ${renderSteps("unit")}
@@ -764,7 +792,7 @@
 
         <div class="action-strip no-print">
           <button class="btn ghost" type="button" data-action="go" data-view="identity">Назад</button>
-          <button class="btn primary" type="button" data-action="continue-unit">Выбрать установку</button>
+          <button class="btn primary" type="button" data-action="continue-unit">${needsCommonBlock ? "Пройти общий блок" : "Выбрать установку"}</button>
         </div>
       </section>
     `;
@@ -772,16 +800,25 @@
 
   function renderEquipmentSelection() {
     const unit = selectedUnit();
+    if (hasDepartmentCommonBlock(unit) && !state.departmentCommonComplete) {
+      setView("department-learning");
+      return;
+    }
     const equipmentItems = unit.equipment || [];
     const equipment = selectedEquipment();
+    const isSeamlessDepartment = unit.id === "seamless-pipe-department";
 
     app.innerHTML = `
       ${renderSteps("equipment")}
       <section class="equipment-card-screen">
         <div class="screen-heading">
           <p class="eyebrow">Шаг 3</p>
-          <h2>Выбор установки</h2>
-          <p>Для готовых модулей можно сразу начать обучение. Для остальных направлений показана заглушка.</p>
+          <h2>${isSeamlessDepartment ? "Выберите установку" : "Выбор установки"}</h2>
+          <p>${
+            isSeamlessDepartment
+              ? "Далее будет показан принцип работы и нюансы охраны труда для выбранного оборудования."
+              : "Для готовых модулей можно сразу начать обучение. Для остальных направлений показана заглушка."
+          }</p>
         </div>
 
         ${renderBreadcrumbs(Boolean(equipment))}
@@ -813,6 +850,7 @@
       <button class="installation-card ${active ? "active" : ""} ${ready ? "ready" : "disabled"}" type="button" data-action="select-equipment" data-id="${escapeHtml(equipment.id)}">
         <span class="equipment-status ${ready ? "status-ready" : "status-draft"}">${escapeHtml(statusText(equipment))}</span>
         <strong>${escapeHtml(equipment.name)}</strong>
+        ${equipment.description ? `<p>${escapeHtml(equipment.description)}</p>` : ""}
         <small>Инструкция: ${escapeHtml(equipment.instruction || "не назначена")}</small>
         <small>Подразделение: ${escapeHtml(unitRouteName(selectedUnit()))}</small>
         <div class="risk-badges">
@@ -843,14 +881,36 @@
       setView("equipment");
       return;
     }
+    const videoBrief = equipment.videoBrief || {
+      title: equipment.name,
+      focus: "Смотрите короткими фрагментами: где опасная зона, какие СИЗ нужны и когда оборудование нужно остановить.",
+      watchlist: [
+        "положение рук относительно опасной зоны",
+        "куда отлетает стружка и фрагменты",
+        "что считается стоп-сигналом"
+      ],
+      cards: [
+        { tone: "risk", icon: "alert", label: "Высокий риск", title: "Опасная зона", text: "обратите внимание на движущиеся части" },
+        { tone: "ppe", icon: "shield", label: "СИЗ", title: "Защита до запуска", text: "проверить СИЗ до подхода к оборудованию" },
+        { tone: "forbidden", icon: "stop", label: "Запрещено", title: "Руки у механизма", text: "ручные операции только после остановки" },
+        { tone: "warning", icon: "bolt", label: "Стоп-сигнал", title: "Вибрация / запах / провод", text: "остановить работу и сообщить руководителю" }
+      ]
+    };
+    const videoToneClass = {
+      risk: "risk",
+      ppe: "ppe",
+      forbidden: "forbidden",
+      warning: "warning",
+      summary: "ppe"
+    };
 
     app.innerHTML = `
       ${renderSteps("video")}
       <section class="learning-layout">
         <div class="screen-heading">
           <p class="eyebrow">Видео</p>
-          <h2>${escapeHtml(equipment.name)}</h2>
-          <p>${escapeHtml(equipment.instruction)} · короткий разбор рисков перед практическими модулями.</p>
+          <h2>${escapeHtml(videoBrief.title || "Принцип работы установки")}</h2>
+          <p>${escapeHtml(equipment.name)} · ${escapeHtml(equipment.instruction)} · видео объясняет процесс и опасные зоны без реального запуска оборудования.</p>
         </div>
 
         ${renderBreadcrumbs()}
@@ -861,46 +921,32 @@
           </video>
           <div id="videoFallback" class="video-fallback ${state.videoMissing ? "" : "is-hidden"}">
             <span class="fallback-mark"></span>
-            <h3>Видео будет подключено позже</h3>
-            <p>Файл ${escapeHtml(equipment.video)} не найден. Для демонстрации можно продолжить интерактивное обучение.</p>
+            <h3>Видео-заглушка: принцип работы</h3>
+            <p>Файл ${escapeHtml(equipment.video)} не найден. Съёмка предполагается на остановленном оборудовании: стрелки, схемы, стоп-кадры, титры и подсветка опасных зон.</p>
           </div>
           <aside class="video-insight-panel">
             <span>В фокусе</span>
-            <strong>Вращение · стружка · электрика</strong>
-            <p>Смотрите короткими фрагментами: где опасная зона, какие СИЗ нужны и когда станок нужно остановить.</p>
+            <strong>${escapeHtml(videoBrief.focus || "Принцип работы и опасные зоны")}</strong>
+            <p>Видео не заменяет ИОТ: оно помогает понять, что движется, где появляется риск и почему дальше идут правила охраны труда.</p>
             <ul class="video-watchlist">
-              <li>положение рук относительно патрона и сверла</li>
-              <li>куда отлетает стружка и фрагменты</li>
-              <li>что считается стоп-сигналом</li>
+              ${(videoBrief.watchlist || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
             </ul>
           </aside>
         </div>
 
         <section class="video-brief-grid" aria-label="Что отследить в видео">
-          <article class="video-brief-card risk">
-            <span>${renderIcon("alert")}</span>
-            <small>Высокий риск</small>
-            <strong>Вращение и захват</strong>
-            <p>Не приближать руки, одежду, ключи и СИЗ к патрону.</p>
-          </article>
-          <article class="video-brief-card ppe">
-            <span>${renderIcon("shield")}</span>
-            <small>СИЗ</small>
-            <strong>Очки / щиток до запуска</strong>
-            <p>Защита глаз нужна до подхода к рабочей зоне.</p>
-          </article>
-          <article class="video-brief-card forbidden">
-            <span>${renderIcon("stop")}</span>
-            <small>Запрещено</small>
-            <strong>Руки у патрона</strong>
-            <p>Не тормозить, не поправлять и не удерживать детали руками.</p>
-          </article>
-          <article class="video-brief-card warning">
-            <span>${renderIcon("bolt")}</span>
-            <small>Стоп-сигнал</small>
-            <strong>Вибрация, запах, провод</strong>
-            <p>При отклонениях остановить работу и сообщить руководителю.</p>
-          </article>
+          ${(videoBrief.cards || [])
+            .map(
+              (card) => `
+                <article class="video-brief-card ${videoToneClass[card.tone] || "warning"}">
+                  <span>${renderIcon(card.icon || "alert")}</span>
+                  <small>${escapeHtml(card.label || "Важно")}</small>
+                  <strong>${escapeHtml(card.title)}</strong>
+                  <p>${escapeHtml(card.text)}</p>
+                </article>
+              `
+            )
+            .join("")}
         </section>
 
         <div class="action-strip no-print">
@@ -1561,7 +1607,8 @@
   }
 
   function learningFlowScreens() {
-    return LEARNING_FOCUS_FLOW;
+    const current = selectedModule();
+    return current?.learningScreens || LEARNING_FOCUS_FLOW;
   }
 
   function focusBadgeClass(tone) {
@@ -1655,6 +1702,66 @@
     `;
   }
 
+  function renderZoneMapVisual(screen) {
+    const zones = screen.zones || (screen.cards || []).map((card) => card.title).slice(0, 3);
+    return `
+      <div class="equipment-zone-visual" aria-label="Схема опасных зон">
+        <div class="equipment-zone-grid">
+          <i class="zone-machine-line"></i>
+          <i class="zone-machine-core"></i>
+          <i class="zone-motion-arrow"></i>
+          ${zones
+            .slice(0, 3)
+            .map(
+              (zone, index) => `
+                <span class="zone-pin pin-${index + 1}">
+                  <b>${index + 1}</b>
+                  ${escapeHtml(zone)}
+                </span>
+              `
+            )
+            .join("")}
+        </div>
+        ${renderFocusCards(screen)}
+      </div>
+    `;
+  }
+
+  function renderSequenceVisual(screen) {
+    return `
+      <div class="focus-sequence" aria-label="Последовательность действий">
+        ${(screen.cards || [])
+          .slice(0, 4)
+          .map(
+            (card, index) => `
+              <article class="${focusCardClass(card.tone)}">
+                <i>${index + 1}</i>
+                <span>${renderIcon(card.icon || "check")}</span>
+                <strong>${escapeHtml(card.title)}</strong>
+                <p>${escapeHtml(card.text)}</p>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderControlPanelVisual(screen) {
+    return `
+      <div class="focus-control-visual">
+        <div class="control-panel-illustration" aria-label="Пульт управления">
+          <span class="panel-screen"></span>
+          <span class="panel-stop">STOP</span>
+          <span class="panel-button safe"></span>
+          <span class="panel-button warn"></span>
+          ${screen.callout ? `<b class="panel-callout">${escapeHtml(screen.callout)}</b>` : ""}
+        </div>
+        ${renderFocusCards(screen)}
+      </div>
+    `;
+  }
+
   function renderFocusVisual(screen) {
     if (screen.visualType === "intro") {
       return `
@@ -1679,6 +1786,18 @@
         ${renderSimpleHazardVisual()}
         ${renderFocusCards(screen)}
       `;
+    }
+
+    if (screen.visualType === "zone-map" || screen.visualType === "check-map") {
+      return renderZoneMapVisual(screen);
+    }
+
+    if (screen.visualType === "sequence" || screen.visualType === "algorithm" || screen.visualType === "roles") {
+      return renderSequenceVisual(screen);
+    }
+
+    if (screen.visualType === "control-panel") {
+      return renderControlPanelVisual(screen);
     }
 
     if (screen.visualType === "steps") {
@@ -1718,6 +1837,118 @@
     }
 
     return renderFocusCards(screen);
+  }
+
+  function renderDepartmentMiniQuestion(screen) {
+    const mini = screen.miniQuestion;
+    if (!mini) {
+      return "";
+    }
+
+    const miniAnswer = state.departmentMiniAnswers[screen.id];
+    return `
+      <form class="mini-question" aria-label="Мини-проверка общего блока">
+        <div>
+          <span>${renderIcon("quiz")}</span>
+          <strong>${escapeHtml(mini.question)}</strong>
+        </div>
+        <div class="option-list">
+          ${mini.options
+            .map(
+              (option, index) => `
+                <label class="${miniAnswer === index ? "selected" : ""} ${miniAnswer !== undefined && index === mini.answer ? "right" : ""} ${
+                miniAnswer === index && index !== mini.answer ? "wrong" : ""
+              }">
+                  <input type="radio" name="department-mini" value="${index}" ${miniAnswer === index ? "checked" : ""}>
+                  <span>${escapeHtml(option)}</span>
+                </label>
+              `
+            )
+            .join("")}
+        </div>
+        <div class="mini-actions">
+          <button class="btn secondary" type="button" data-action="answer-department-mini">Ответить</button>
+          ${miniAnswer !== undefined ? `<p class="feedback">${escapeHtml(mini.feedback)}</p>` : ""}
+        </div>
+      </form>
+    `;
+  }
+
+  function renderDepartmentLearning() {
+    const unit = selectedUnit();
+    const screens = selectedCommonBlocks();
+    if (!screens.length) {
+      state.departmentCommonComplete = true;
+      setView("equipment");
+      return;
+    }
+
+    const screen = screens[state.departmentLearningIndex] || screens[0];
+    state.visitedDepartmentLearning.add(state.departmentLearningIndex);
+
+    const progress = Math.round(((state.departmentLearningIndex + 1) / screens.length) * 100);
+    const allViewed = state.visitedDepartmentLearning.size === screens.length;
+    const badge = screen.badge || { label: "Общий блок", tone: "info" };
+    const answered = !screen.miniQuestion || state.departmentMiniAnswers[screen.id] !== undefined;
+
+    app.innerHTML = `
+      ${renderSteps("department-learning")}
+      <section class="learning-screen focus-learning-screen department-common-screen" style="--learning-progress:${progress}%">
+        <div class="focus-learning-header">
+          <div>
+            <div class="learning-title-row">
+              <p class="eyebrow">${escapeHtml(unit.commonTitle || "Общие требования охраны труда")}</p>
+              <span class="badge ${focusBadgeClass(badge.tone)}">${escapeHtml(badge.label)}</span>
+            </div>
+            <h2>${escapeHtml(screen.title)}</h2>
+            <p class="key-thought">${escapeHtml(screen.lead)}</p>
+          </div>
+          <div class="focus-step-count">
+            <span>Общий блок</span>
+            <strong>${state.departmentLearningIndex + 1}/${screens.length}</strong>
+          </div>
+        </div>
+
+        <p class="department-common-subtitle">${escapeHtml(unit.commonSubtitle || "Правила, обязательные до выбора установки")}</p>
+
+        ${renderBreadcrumbs(false)}
+
+        <div class="progress-block">
+          <div class="progress-meta">
+            <span>${escapeHtml(screen.number)} · ${escapeHtml(screen.title)}</span>
+            <span>${progress}% общего блока</span>
+          </div>
+          <div class="progress-bar"><span style="width:${progress}%"></span></div>
+        </div>
+
+        <div class="learning-mini-stepper" aria-label="Прогресс общего блока">
+          ${screens
+            .map(
+              (item, index) => `
+                <span class="${index === state.departmentLearningIndex ? "active" : state.visitedDepartmentLearning.has(index) ? "seen" : ""}" title="${escapeHtml(item.title)}"></span>
+              `
+            )
+            .join("")}
+        </div>
+
+        <article class="focus-learning-card ${escapeHtml(screen.visualType)}">
+          <div class="focus-main-visual">
+            ${renderFocusVisual(screen)}
+          </div>
+        </article>
+
+        ${renderDepartmentMiniQuestion(screen)}
+
+        <div class="slide-controls no-print">
+          <button class="btn ghost" type="button" data-action="department-learning-prev" ${state.departmentLearningIndex === 0 ? "disabled" : ""}>Назад</button>
+          ${
+            state.departmentLearningIndex < screens.length - 1
+              ? '<button class="btn primary" type="button" data-action="department-learning-next">Далее</button>'
+              : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Выбрать установку</button>`
+          }
+        </div>
+      </section>
+    `;
   }
 
   function renderLearning() {
@@ -1877,7 +2108,8 @@
       position: state.employee.position,
       email: state.employee.email,
       organization: selectedOrganization().name,
-      department: selectedUnit().name,
+      department: unitRouteName(selectedUnit()),
+      commonBlock: hasDepartmentCommonBlock() ? "Общие требования охраны труда: пройден" : "",
       equipment: equipment.name,
       installation: equipment.name,
       instruction: equipment.instruction,
@@ -2047,6 +2279,7 @@
                 <th>Должность</th>
                 <th>Организация</th>
                 <th>Подразделение</th>
+                <th>Общий блок</th>
                 <th>Установка</th>
                 <th>Инструкция</th>
                 <th>Результат</th>
@@ -2115,7 +2348,7 @@
       return;
     }
     if (!rows.length) {
-      body.innerHTML = `<tr><td colspan="11" class="empty-cell">Записей не найдено</td></tr>`;
+      body.innerHTML = `<tr><td colspan="12" class="empty-cell">Записей не найдено</td></tr>`;
       return;
     }
 
@@ -2129,6 +2362,7 @@
             <td>${escapeHtml(item.position || "—")}</td>
             <td>${escapeHtml(item.organization || "—")}</td>
             <td>${escapeHtml(item.department || "—")}</td>
+            <td>${escapeHtml(item.commonBlock || "—")}</td>
             <td>${escapeHtml(item.installation || item.equipment || "—")}</td>
             <td>${escapeHtml(item.instruction || "—")}</td>
             <td><span class="status ${item.passed ? "passed" : "failed"}">${item.score}/${item.total} (${item.percent}%)</span></td>
@@ -2173,6 +2407,10 @@
     return learningFlowScreens()[state.learningIndex] || learningFlowScreens()[0];
   }
 
+  function currentDepartmentBlock() {
+    return selectedCommonBlocks()[state.departmentLearningIndex] || selectedCommonBlocks()[0];
+  }
+
   function handleAction(event) {
     const target = event.target.closest("[data-action]");
     if (!target) {
@@ -2191,6 +2429,7 @@
       state.selection.organizationId = target.dataset.id;
       state.selection.unitId = selectedOrganization().children[0].id;
       syncUnitSelection();
+      resetDepartmentProgress();
       renderUnitSelection();
       return;
     }
@@ -2198,11 +2437,16 @@
     if (action === "select-unit") {
       state.selection.unitId = target.dataset.id;
       syncUnitSelection();
+      resetDepartmentProgress();
       renderUnitSelection();
       return;
     }
 
     if (action === "continue-unit") {
+      if (hasDepartmentCommonBlock() && !state.departmentCommonComplete) {
+        setView("department-learning");
+        return;
+      }
       setView("equipment");
       return;
     }
@@ -2240,7 +2484,56 @@
       return;
     }
 
+    if (action === "department-learning-prev") {
+      state.departmentLearningIndex = Math.max(0, state.departmentLearningIndex - 1);
+      renderDepartmentLearning();
+      return;
+    }
+
+    if (action === "department-learning-next") {
+      const block = currentDepartmentBlock();
+      if (block.miniQuestion && state.departmentMiniAnswers[block.id] === undefined) {
+        showToast("Ответьте на мини-вопрос общего блока");
+        return;
+      }
+      state.departmentLearningIndex = Math.min(selectedCommonBlocks().length - 1, state.departmentLearningIndex + 1);
+      renderDepartmentLearning();
+      return;
+    }
+
+    if (action === "answer-department-mini") {
+      const checked = document.querySelector('input[name="department-mini"]:checked');
+      if (!checked) {
+        showToast("Выберите вариант ответа");
+        return;
+      }
+      const block = currentDepartmentBlock();
+      state.departmentMiniAnswers[block.id] = Number(checked.value);
+      renderDepartmentLearning();
+      return;
+    }
+
+    if (action === "department-learning-complete") {
+      const block = currentDepartmentBlock();
+      if (block.miniQuestion && state.departmentMiniAnswers[block.id] === undefined) {
+        showToast("Ответьте на мини-вопрос общего блока");
+        return;
+      }
+      if (state.visitedDepartmentLearning.size < selectedCommonBlocks().length) {
+        showToast("Просмотрите все слайды общего блока");
+        return;
+      }
+      state.departmentCommonComplete = true;
+      setView("equipment");
+      return;
+    }
+
     if (action === "begin-training") {
+      if (hasDepartmentCommonBlock() && !state.departmentCommonComplete) {
+        showToast("Сначала пройдите общий блок отдела");
+        setView("department-learning");
+        return;
+      }
       if (!isReadyEquipment(selectedEquipment())) {
         showToast("Для выбранной установки модуль еще в разработке");
         return;
@@ -2381,6 +2674,7 @@
       home: renderHome,
       identity: renderIdentity,
       unit: renderUnitSelection,
+      "department-learning": renderDepartmentLearning,
       equipment: renderEquipmentSelection,
       "equipment-card": renderEquipmentSelection,
       video: renderVideo,
