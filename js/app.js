@@ -342,8 +342,15 @@
   }
 
   function unitDescription(unit) {
+    if (unit.sectionName) {
+      return unit.sectionName;
+    }
     const hasReady = (unit.equipment || []).some((equipment) => equipment.status === "ready");
     return hasReady ? "ИОТ-47 доступна" : "модуль готовится";
+  }
+
+  function unitRouteName(unit) {
+    return unit.sectionName ? `${unit.name} · ${unit.sectionName}` : unit.name;
   }
 
   function statusText(equipment) {
@@ -459,6 +466,9 @@
     const unit = selectedUnit();
     const equipment = selectedEquipment();
     const parts = [organization.name, unit.name];
+    if (unit.sectionName) {
+      parts.push(unit.sectionName);
+    }
     if (includeEquipment && equipment) {
       parts.push(equipment.shortName || equipment.name);
     }
@@ -472,10 +482,19 @@
 
   function renderRoutePreview(includeEquipment = false) {
     const equipment = selectedEquipment();
+    const unit = selectedUnit();
     const nodes = [
       { label: "Организация", value: selectedOrganization().name, status: "done" },
-      { label: typeLabel(selectedUnit().type), value: selectedUnit().name, status: "active" }
+      { label: typeLabel(unit.type), value: unit.name, status: unit.sectionName ? "done" : "active" }
     ];
+
+    if (unit.sectionName) {
+      nodes.push({
+        label: "Участок",
+        value: unit.sectionName,
+        status: includeEquipment ? "done" : "active"
+      });
+    }
 
     if (includeEquipment) {
       nodes.push({
@@ -795,7 +814,7 @@
         <span class="equipment-status ${ready ? "status-ready" : "status-draft"}">${escapeHtml(statusText(equipment))}</span>
         <strong>${escapeHtml(equipment.name)}</strong>
         <small>Инструкция: ${escapeHtml(equipment.instruction || "не назначена")}</small>
-        <small>Подразделение: ${escapeHtml(selectedUnit().name)}</small>
+        <small>Подразделение: ${escapeHtml(unitRouteName(selectedUnit()))}</small>
         <div class="risk-badges">
           ${(equipment.riskBadges || []).map((risk) => `<b>${escapeHtml(risk)}</b>`).join("")}
         </div>
@@ -807,7 +826,8 @@
     return `
       <article class="installation-card placeholder-card">
         <span class="equipment-status status-draft">Обучающий модуль в разработке</span>
-        <strong>${escapeHtml(unit.name)}</strong>
+        <strong>${escapeHtml(unit.sectionName || unit.name)}</strong>
+        ${unit.sectionName ? `<small>В составе: ${escapeHtml(unit.name)}</small>` : ""}
         <small>Для этого подразделения установка еще не подключена к цифровому обучению.</small>
         <div class="risk-badges">
           <b>каталог создан</b>

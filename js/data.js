@@ -53,6 +53,13 @@ const trainingCatalog = [
         equipment: []
       },
       {
+        id: "seamless-pipe-department",
+        type: "department",
+        name: "Отдел бесшовных труб",
+        sectionName: "Участок ЭИП ОМД",
+        equipment: []
+      },
+      {
         id: "heat-treatment-lab",
         type: "laboratory",
         name: "Лаборатория термической обработки",
