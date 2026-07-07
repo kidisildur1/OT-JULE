@@ -1634,8 +1634,13 @@
     }[tone] || "info";
   }
 
+  function focusCardLimit(screen) {
+    return Number.isFinite(screen.cardLimit) ? screen.cardLimit : 4;
+  }
+
   function renderFocusCards(screen) {
-    const cards = (screen.cards || []).slice(0, 4);
+    const limit = focusCardLimit(screen);
+    const cards = (screen.cards || []).slice(0, limit);
     if (!cards.length) {
       return "";
     }
@@ -1651,6 +1656,90 @@
                   <strong>${escapeHtml(card.title)}</strong>
                   <p>${escapeHtml(card.text)}</p>
                 </div>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderCommonCard(card, index, className = "") {
+    return `
+      <article class="common-card ${focusCardClass(card.tone)} ${className}">
+        <span>${renderIcon(card.icon || "check")}</span>
+        <div>
+          <small>${String(index + 1).padStart(2, "0")}</small>
+          <strong>${escapeHtml(card.title)}</strong>
+          <p>${escapeHtml(card.text)}</p>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderCommonGridVisual(screen, className = "common-info-grid") {
+    const cards = (screen.cards || []).slice(0, focusCardLimit(screen));
+    return `
+      <div class="common-onboarding-visual ${className}">
+        ${cards.map((card, index) => renderCommonCard(card, index)).join("")}
+      </div>
+    `;
+  }
+
+  function renderCommonChecklistVisual(screen) {
+    const cards = (screen.cards || []).slice(0, focusCardLimit(screen));
+    return `
+      <div class="common-checklist-visual">
+        ${cards
+          .map(
+            (card, index) => `
+              <article class="${focusCardClass(card.tone)}">
+                <i>${renderIcon(card.icon || "check")}</i>
+                <div>
+                  <small>${String(index + 1).padStart(2, "0")}</small>
+                  <strong>${escapeHtml(card.title)}</strong>
+                  <p>${escapeHtml(card.text)}</p>
+                </div>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderCommonDoDontVisual(screen) {
+    const cards = (screen.cards || []).slice(0, focusCardLimit(screen));
+    const safeCards = cards.filter((card) => !["danger", "warning"].includes(card.tone));
+    const stopCards = cards.filter((card) => ["danger", "warning"].includes(card.tone));
+    const renderList = (items) => items.map((card) => `<li>${renderIcon(card.icon || "check")}<span>${escapeHtml(card.title)}<small>${escapeHtml(card.text)}</small></span></li>`).join("");
+
+    return `
+      <div class="common-dodont-visual">
+        <article class="do">
+          <b>Проверить</b>
+          <ul>${renderList(safeCards)}</ul>
+        </article>
+        <article class="dont">
+          <b>Остановиться</b>
+          <ul>${renderList(stopCards)}</ul>
+        </article>
+      </div>
+    `;
+  }
+
+  function renderCommonTimelineVisual(screen) {
+    const cards = (screen.cards || []).slice(0, focusCardLimit(screen));
+    return `
+      <div class="common-timeline-visual">
+        ${cards
+          .map(
+            (card, index) => `
+              <article class="${focusCardClass(card.tone)}">
+                <i>${index + 1}</i>
+                <span>${renderIcon(card.icon || "check")}</span>
+                <strong>${escapeHtml(card.title)}</strong>
+                <p>${escapeHtml(card.text)}</p>
               </article>
             `
           )
@@ -1804,6 +1893,30 @@
       return renderControlPanelVisual(screen);
     }
 
+    if (screen.visualType === "info-cards") {
+      return renderCommonGridVisual(screen, "common-info-grid");
+    }
+
+    if (screen.visualType === "ppe-cards") {
+      return renderCommonGridVisual(screen, "common-ppe-grid");
+    }
+
+    if (screen.visualType === "checklist-card") {
+      return renderCommonChecklistVisual(screen);
+    }
+
+    if (screen.visualType === "do-dont-card") {
+      return renderCommonDoDontVisual(screen);
+    }
+
+    if (screen.visualType === "role-stepper" || screen.visualType === "emergency-timeline") {
+      return renderCommonTimelineVisual(screen);
+    }
+
+    if (screen.visualType === "safety-rules-card") {
+      return renderCommonGridVisual(screen, "common-safety-grid");
+    }
+
     if (screen.visualType === "steps") {
       return `
         <div class="focus-step-list">
@@ -1948,7 +2061,7 @@
           ${
             state.departmentLearningIndex < screens.length - 1
               ? '<button class="btn primary" type="button" data-action="department-learning-next">Далее</button>'
-              : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Выбрать установку</button>`
+              : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Теперь выберите установку</button>`
           }
         </div>
       </section>

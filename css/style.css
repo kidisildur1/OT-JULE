@@ -3832,6 +3832,205 @@ body {
   line-height: 1.5;
 }
 
+.department-common-screen {
+  max-width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.department-common-screen .focus-learning-card {
+  border-color: rgba(51, 214, 208, 0.18);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(51, 214, 208, 0.15), transparent 28%),
+    radial-gradient(circle at 92% 16%, rgba(247, 184, 75, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(20, 31, 43, 0.94), rgba(8, 13, 19, 0.98));
+}
+
+.common-onboarding-visual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: clamp(12px, 2vw, 16px);
+}
+
+.common-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+  border: 1px solid rgba(120, 168, 255, 0.15);
+  border-radius: 8px;
+  padding: clamp(14px, 2vw, 18px);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(8, 13, 19, 0.64);
+}
+
+.common-card > span,
+.common-checklist-visual i,
+.common-timeline-visual article > span {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(51, 214, 208, 0.28);
+  border-radius: 8px;
+  color: var(--cyan);
+  background: rgba(51, 214, 208, 0.08);
+}
+
+.common-card svg,
+.common-checklist-visual svg,
+.common-dodont-visual svg,
+.common-timeline-visual svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.common-card small,
+.common-checklist-visual small {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.common-card strong,
+.common-checklist-visual strong,
+.common-dodont-visual b,
+.common-timeline-visual strong {
+  display: block;
+  color: var(--text);
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.2;
+}
+
+.common-card p,
+.common-checklist-visual p,
+.common-timeline-visual p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.common-ppe-grid .common-card {
+  min-height: 176px;
+  border-color: rgba(101, 213, 141, 0.2);
+}
+
+.common-safety-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+
+.common-checklist-visual {
+  display: grid;
+  gap: 12px;
+}
+
+.common-checklist-visual article {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+  border: 1px solid rgba(101, 213, 141, 0.18);
+  border-radius: 8px;
+  padding: clamp(14px, 2vw, 18px);
+  background: rgba(8, 13, 19, 0.58);
+}
+
+.common-dodont-visual {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.common-dodont-visual article {
+  min-width: 0;
+  border: 1px solid rgba(120, 168, 255, 0.14);
+  border-radius: 8px;
+  padding: clamp(16px, 2.5vw, 22px);
+  background: rgba(8, 13, 19, 0.62);
+}
+
+.common-dodont-visual .do {
+  border-color: rgba(101, 213, 141, 0.28);
+  background: linear-gradient(135deg, rgba(101, 213, 141, 0.1), rgba(8, 13, 19, 0.66));
+}
+
+.common-dodont-visual .dont {
+  border-color: rgba(247, 184, 75, 0.32);
+  background: linear-gradient(135deg, rgba(247, 184, 75, 0.11), rgba(8, 13, 19, 0.66));
+}
+
+.common-dodont-visual ul {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.common-dodont-visual li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  color: var(--text);
+}
+
+.common-dodont-visual li svg {
+  color: var(--cyan);
+}
+
+.common-dodont-visual li small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.common-timeline-visual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 12px;
+}
+
+.common-timeline-visual article {
+  position: relative;
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  min-height: 190px;
+  border: 1px solid rgba(120, 168, 255, 0.14);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(8, 13, 19, 0.62);
+}
+
+.common-timeline-visual article > i {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  color: #041012;
+  background: var(--cyan);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.common-timeline-visual article > span {
+  margin-bottom: 12px;
+}
+
 .equipment-zone-visual,
 .focus-control-visual {
   display: grid;
@@ -4503,7 +4702,8 @@ body {
   .focus-route-visual,
   .focus-step-list,
   .focus-dodont,
-  .focus-sequence {
+  .focus-sequence,
+  .common-dodont-visual {
     grid-template-columns: 1fr;
   }
 

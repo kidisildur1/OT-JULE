@@ -7,7 +7,8 @@ const seamlessTubeCommonBlocks = [
     title: "Допуск к работе",
     lead: "К работе приступают только после допуска, понятного задания и нормального самочувствия.",
     badge: { label: "Обязательно", tone: "safe" },
-    visualType: "steps",
+    visualType: "info-cards",
+    cardLimit: 5,
     cards: [
       { tone: "required", icon: "certificate", title: "Прошел инструктаж", text: "знает требования перед началом работы" },
       { tone: "info", icon: "check", title: "Понимает задачу", text: "ясно, что именно поручено выполнить" },
@@ -22,7 +23,7 @@ const seamlessTubeCommonBlocks = [
     title: "СИЗ обязательны",
     lead: "СИЗ надевают до входа в рабочую зону и проверяют их исправность.",
     badge: { label: "СИЗ", tone: "safe" },
-    visualType: "ppe",
+    visualType: "ppe-cards",
     cards: [
       { tone: "safe", icon: "suit", title: "Спецодежда", text: "исправная, застегнутая, без свисающих частей" },
       { tone: "safe", icon: "shoe", title: "Спецобувь", text: "исправная и подходящая для участка" },
@@ -36,7 +37,7 @@ const seamlessTubeCommonBlocks = [
     title: "Рабочее место перед началом",
     lead: "До запуска рабочая зона должна быть свободной, освещенной и готовой к безопасной эвакуации.",
     badge: { label: "Проверить", tone: "info" },
-    visualType: "compare",
+    visualType: "checklist-card",
     cards: [
       { tone: "safe", icon: "clean", title: "Убрать лишнее", text: "предметы не должны мешать работе" },
       { tone: "required", icon: "center", title: "Проходы", text: "не загромождать проходы и пути эвакуации" },
@@ -50,7 +51,8 @@ const seamlessTubeCommonBlocks = [
     title: "Исправность оборудования и инструмента",
     lead: "Любая неисправность останавливает работу до сообщения руководителю.",
     badge: { label: "До пуска", tone: "warning" },
-    visualType: "steps",
+    visualType: "do-dont-card",
+    cardLimit: 5,
     cards: [
       { tone: "required", icon: "wrench", title: "Инструмент", text: "проверить состояние до работы" },
       { tone: "required", icon: "clamp", title: "Крепления", text: "узлы и оснастка должны быть надежны" },
@@ -65,7 +67,7 @@ const seamlessTubeCommonBlocks = [
     title: "Работа не в одиночку",
     lead: "На оборудовании работают минимум два сотрудника с понятными ролями.",
     badge: { label: "Роли", tone: "info" },
-    visualType: "roles",
+    visualType: "role-stepper",
     cards: [
       { tone: "required", icon: "user", title: "Минимум двое", text: "один сотрудник на оборудовании не работает" },
       { tone: "required", icon: "center", title: "Оператор", text: "управляет процессом и контролирует ход работы" },
@@ -79,12 +81,15 @@ const seamlessTubeCommonBlocks = [
     title: "Электробезопасность",
     lead: "Электрооборудование проверяют до работы, ремонт выполняют только допущенные лица.",
     badge: { label: "Высокий риск", tone: "danger" },
-    visualType: "hazard-map-simple",
+    visualType: "safety-rules-card",
+    cardLimit: 6,
     cards: [
-      { tone: "danger", icon: "bolt", title: "Провода", text: "не трогать оголенные и поврежденные провода" },
-      { tone: "required", icon: "check", title: "До пуска", text: "проверить рубильники, кнопки, провода и заземление" },
-      { tone: "danger", icon: "stop", title: "Ремонт", text: "только допущенные лица" },
-      { tone: "warning", icon: "alert", title: "Не закрывать доступ", text: "не размещать предметы на проводах, выключателях и рубильниках" }
+      { tone: "required", icon: "bolt", title: "Рубильники", text: "проверить доступность и исправное положение" },
+      { tone: "required", icon: "check", title: "Кнопки включения", text: "убедиться, что управление работает штатно" },
+      { tone: "warning", icon: "alert", title: "Силовая проводка", text: "не допускать повреждений и посторонних предметов" },
+      { tone: "safe", icon: "shield", title: "Заземление", text: "проверить наличие и целостность перед работой" },
+      { tone: "danger", icon: "bolt", title: "Токоведущие части", text: "не касаться оголенных и поврежденных элементов" },
+      { tone: "danger", icon: "stop", title: "Ремонт запрещен", text: "самостоятельно не ремонтировать, вызвать допущенных лиц" }
     ]
   },
   {
@@ -93,7 +98,8 @@ const seamlessTubeCommonBlocks = [
     title: "Аварийная ситуация",
     lead: "При аварии сначала прекращают работу, затем помогают людям и вызывают нужную службу.",
     badge: { label: "Авария", tone: "danger" },
-    visualType: "algorithm",
+    visualType: "emergency-timeline",
+    cardLimit: 5,
     cards: [
       { tone: "danger", icon: "stop", title: "Прекратить работу", text: "остановить действие и не продолжать операцию" },
       { tone: "safe", icon: "shield", title: "Увести из опасной зоны", text: "вывести пострадавшего, если это безопасно" },
