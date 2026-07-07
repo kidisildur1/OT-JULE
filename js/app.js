@@ -551,7 +551,7 @@
               <h2>Гость</h2>
               <p>Краткий вводный инструктаж для посещения территории</p>
             </div>
-            <button class="btn secondary" type="button" data-action="go" data-view="identity">Пройти как гость</button>
+            <a class="btn secondary" href="https://alex211882.github.io/defender/" target="_blank" rel="noopener noreferrer">Пройти как гость</a>
           </article>
 
           <article class="scenario-card employee">
