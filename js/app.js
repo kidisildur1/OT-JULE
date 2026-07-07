@@ -148,6 +148,127 @@
     }
   };
 
+  const LEARNING_FOCUS_FLOW = [
+    {
+      id: "training-intro",
+      number: "5.1",
+      title: "Введение в обучение",
+      lead: "За несколько шагов разберем, где риск, как защититься и что делать перед запуском.",
+      badge: { label: "Старт", tone: "info" },
+      visualType: "intro",
+      cards: [
+        { tone: "info", icon: "play", title: "Сначала понять", text: "Смотрите на станок как на источник конкретных рисков." },
+        { tone: "required", icon: "shield", title: "Потом защититься", text: "СИЗ и проверка места идут до любой операции." },
+        { tone: "safe", icon: "certificate", title: "В конце подтвердить", text: "После обучения будет короткая проверка знаний." }
+      ]
+    },
+    {
+      id: "hazard-map-simple",
+      number: "5.2",
+      title: "Карта опасных зон",
+      lead: "Главная мысль: руки, одежда и предметы не попадают в зону вращения и стружки.",
+      badge: { label: "Высокий риск", tone: "danger" },
+      visualType: "hazard-map-simple",
+      cards: [
+        { tone: "danger", icon: "rotate", title: "Патрон", text: "захват одежды, ключа или руки" },
+        { tone: "warning", icon: "chips", title: "Стружка", text: "отлет частиц в лицо и на руки" },
+        { tone: "required", icon: "clamp", title: "Деталь", text: "только надежное крепление до пуска" }
+      ]
+    },
+    {
+      id: "main-risks",
+      number: "5.3",
+      title: "Основные риски",
+      lead: "Запомните четыре риска: вращение, стружка, электричество и проворот детали.",
+      badge: { label: "Риски", tone: "warning" },
+      visualType: "risk-cards",
+      cards: [
+        { tone: "danger", icon: "rotate", title: "Вращение", text: "не приближать руки и свободные элементы одежды" },
+        { tone: "warning", icon: "chips", title: "Стружка", text: "защитить глаза и не убирать руками" },
+        { tone: "danger", icon: "bolt", title: "Электрика", text: "поврежденный кабель или запах гари = стоп" },
+        { tone: "warning", icon: "clamp", title: "Проворот", text: "деталь должна быть закреплена до пуска" }
+      ]
+    },
+    {
+      id: "ppe-focus",
+      number: "5.4",
+      title: "СИЗ",
+      lead: "СИЗ надеваются до подхода к станку и должны быть исправны.",
+      badge: { label: "СИЗ", tone: "safe" },
+      visualType: "ppe-focus",
+      cards: [
+        { tone: "safe", icon: "eye", title: "Очки / щиток", text: "защита от стружки и частиц" },
+        { tone: "required", icon: "suit", title: "Спецодежда", text: "манжеты застегнуты, края не свисают" },
+        { tone: "safe", icon: "shoe", title: "Спецобувь", text: "устойчивая подошва без скольжения" },
+        { tone: "warning", icon: "shield", title: "Исправность", text: "поврежденные СИЗ заменить до работы" }
+      ]
+    },
+    {
+      id: "before-start-actions",
+      number: "5.5",
+      title: "Перед началом работы",
+      lead: "Пуск разрешен только после короткой проверки человека, места, станка и детали.",
+      badge: { label: "Чеклист", tone: "info" },
+      visualType: "steps",
+      cards: [
+        { tone: "required", icon: "user", title: "Допуск", text: "инструктаж и задание понятны" },
+        { tone: "safe", icon: "shield", title: "СИЗ", text: "надеты и исправны" },
+        { tone: "info", icon: "wrench", title: "Станок", text: "пуск/стоп, кабель и заземление проверены" },
+        { tone: "required", icon: "clamp", title: "Крепление", text: "сверло и деталь зафиксированы" }
+      ]
+    },
+    {
+      id: "forbidden-focus",
+      number: "5.6",
+      title: "Что запрещено",
+      lead: "Эти действия нельзя выполнять даже быстро, аккуратно или на малых оборотах.",
+      badge: { label: "Запрещено", tone: "danger" },
+      visualType: "dont",
+      cards: [
+        { tone: "danger", icon: "stop", title: "Держать деталь руками", text: "используйте тиски или приспособление" },
+        { tone: "danger", icon: "rotate", title: "Тормозить патрон", text: "только штатная остановка" },
+        { tone: "danger", icon: "wrench", title: "Крепить на ходу", text: "сначала полная остановка" },
+        { tone: "warning", icon: "alert", title: "Работать с дефектом", text: "неисправность передать руководителю" }
+      ]
+    },
+    {
+      id: "remember",
+      number: "5.7",
+      title: "Что запомнить",
+      lead: "Четыре правила закрывают большинство опасных ситуаций на сверлильном станке.",
+      badge: { label: "Итог", tone: "safe" },
+      visualType: "summary",
+      cards: [
+        { tone: "required", icon: "eye", title: "Дистанция", text: "руки и одежда вне зоны вращения" },
+        { tone: "required", icon: "clamp", title: "Фиксация", text: "деталь закреплена до пуска" },
+        { tone: "warning", icon: "stop", title: "Стоп", text: "вибрация, запах, повреждение = остановка" },
+        { tone: "safe", icon: "shield", title: "Сообщить", text: "риски и дефекты передаются руководителю" }
+      ]
+    },
+    {
+      id: "mini-knowledge-check",
+      number: "5.8",
+      title: "Мини-проверка знаний",
+      lead: "Ответьте на вопрос, чтобы перейти к итоговому тесту.",
+      badge: { label: "Проверка знаний", tone: "info" },
+      visualType: "knowledge",
+      cards: [
+        { tone: "info", icon: "quiz", title: "Проверьте главный принцип", text: "что сделать при вибрации или признаке неисправности?" }
+      ],
+      miniQuestion: {
+        question: "Что делать при вибрации, запахе гари или повреждении кабеля?",
+        options: [
+          "продолжить работу до конца операции",
+          "остановить станок, не запускать повторно и сообщить руководителю",
+          "уменьшить подачу и работать медленнее",
+          "попросить коллегу придержать деталь"
+        ],
+        answer: 1,
+        feedback: "Любой стоп-сигнал требует остановки, запрета повторного запуска и сообщения руководителю."
+      }
+    }
+  ];
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -1419,53 +1540,210 @@
     `;
   }
 
+  function learningFlowScreens() {
+    return LEARNING_FOCUS_FLOW;
+  }
+
+  function focusBadgeClass(tone) {
+    return {
+      danger: "badge-danger",
+      warning: "badge-forbidden",
+      safe: "badge-mandatory",
+      info: "badge-mandatory"
+    }[tone] || "badge-mandatory";
+  }
+
+  function focusCardClass(tone) {
+    return {
+      danger: "danger",
+      warning: "warning",
+      safe: "safe",
+      required: "required",
+      info: "info"
+    }[tone] || "info";
+  }
+
+  function renderFocusCards(screen) {
+    const cards = (screen.cards || []).slice(0, 4);
+    if (!cards.length) {
+      return "";
+    }
+
+    return `
+      <div class="focus-card-grid" aria-label="Ключевые карточки экрана">
+        ${cards
+          .map(
+            (card) => `
+              <article class="focus-card ${focusCardClass(card.tone)}">
+                <span>${renderIcon(card.icon || "check")}</span>
+                <div>
+                  <strong>${escapeHtml(card.title)}</strong>
+                  <p>${escapeHtml(card.text)}</p>
+                </div>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderSimpleHazardVisual() {
+    const zones = [
+      { label: "Патрон", icon: "rotate", x: 52, y: 20 },
+      { label: "Сверло", icon: "chips", x: 50, y: 39 },
+      { label: "Деталь", icon: "clamp", x: 46, y: 62 }
+    ];
+
+    return `
+      <div class="focus-machine-map" aria-label="Упрощенная карта опасных зон">
+        <div class="focus-machine-glow"></div>
+        <div class="focus-machine-head"></div>
+        <div class="focus-machine-spindle"></div>
+        <div class="focus-machine-table"></div>
+        <div class="focus-machine-base"></div>
+        ${zones
+          .map(
+            (zone, index) => `
+              <div class="focus-zone" style="left:${zone.x}%; top:${zone.y}%;">
+                <i>${index + 1}</i>
+                <span>${renderIcon(zone.icon)}</span>
+                <b>${escapeHtml(zone.label)}</b>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderDoDontVisual(screen) {
+    return `
+      <div class="focus-dodont">
+        <article class="do">
+          <span>${renderIcon("check")}</span>
+          <strong>Делать</strong>
+          <p>Остановить станок, дождаться полной остановки, затем исправить ситуацию.</p>
+        </article>
+        <article class="dont">
+          <span>${renderIcon("stop")}</span>
+          <strong>Не делать</strong>
+          <p>Не держать руками, не тормозить патрон, не регулировать на ходу.</p>
+        </article>
+      </div>
+      ${renderFocusCards(screen)}
+    `;
+  }
+
+  function renderFocusVisual(screen) {
+    if (screen.visualType === "intro") {
+      return `
+        <div class="focus-route-visual">
+          ${["Понять риск", "Надеть СИЗ", "Проверить станок", "Ответить на вопрос"]
+            .map(
+              (item, index) => `
+                <article>
+                  <i>${index + 1}</i>
+                  <strong>${escapeHtml(item)}</strong>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+        ${renderFocusCards(screen)}
+      `;
+    }
+
+    if (screen.visualType === "hazard-map-simple") {
+      return `
+        ${renderSimpleHazardVisual()}
+        ${renderFocusCards(screen)}
+      `;
+    }
+
+    if (screen.visualType === "steps") {
+      return `
+        <div class="focus-step-list">
+          ${(screen.cards || [])
+            .slice(0, 4)
+            .map(
+              (card, index) => `
+                <article class="${focusCardClass(card.tone)}">
+                  <i>${index + 1}</i>
+                  <span>${renderIcon(card.icon || "check")}</span>
+                  <strong>${escapeHtml(card.title)}</strong>
+                  <p>${escapeHtml(card.text)}</p>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      `;
+    }
+
+    if (screen.visualType === "dont") {
+      return renderDoDontVisual(screen);
+    }
+
+    if (screen.visualType === "knowledge") {
+      return `
+        <div class="focus-knowledge-panel">
+          <span>${renderIcon("quiz")}</span>
+          <div>
+            <strong>Один вопрос перед тестом</strong>
+            <p>Цель проверки — закрепить стоп-сигнал и правильное действие.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    return renderFocusCards(screen);
+  }
+
   function renderLearning() {
     if (!state.videoSeen) {
       setView("video");
       return;
     }
 
-    const current = selectedModule();
-    const blocks = current.learningBlocks;
-    const block = blocks[state.learningIndex] || blocks[0];
+    const screens = learningFlowScreens();
+    const screen = screens[state.learningIndex] || screens[0];
     state.visitedLearning.add(state.learningIndex);
 
-    const progress = Math.round(((state.learningIndex + 1) / blocks.length) * 100);
-    const allViewed = state.visitedLearning.size === blocks.length;
-    const badge = learningBadge(block);
+    const progress = Math.round(((state.learningIndex + 1) / screens.length) * 100);
+    const allViewed = state.visitedLearning.size === screens.length;
+    const badge = screen.badge || { label: "Обучение", tone: "info" };
 
     app.innerHTML = `
       ${renderSteps("learning")}
-      <section class="learning-screen" style="--learning-progress:${progress}%">
-        <div class="learning-header">
+      <section class="learning-screen focus-learning-screen" style="--learning-progress:${progress}%">
+        <div class="focus-learning-header">
           <div>
             <div class="learning-title-row">
-              <p class="eyebrow">Интерактивное обучение</p>
-              <span class="badge ${badge.className}">${badge.label}</span>
+              <p class="eyebrow">Пункт ${escapeHtml(screen.number)}</p>
+              <span class="badge ${focusBadgeClass(badge.tone)}">${escapeHtml(badge.label)}</span>
             </div>
-            <h2>${escapeHtml(block.title)}</h2>
-            <p class="key-thought">${escapeHtml(block.lead)}</p>
+            <h2>${escapeHtml(screen.title)}</h2>
+            <p class="key-thought">${escapeHtml(screen.lead)}</p>
           </div>
-          <div class="risk-meter ${badgeClassForRisk(block.riskClass)}">
-            <span>Уровень риска</span>
-            <strong>${escapeHtml(block.riskLevel)}</strong>
+          <div class="focus-step-count">
+            <span>Экран</span>
+            <strong>${state.learningIndex + 1}/${screens.length}</strong>
           </div>
         </div>
 
         ${renderBreadcrumbs()}
-        ${learningMetaCards(block)}
-        ${renderBriefingCards(block)}
 
         <div class="progress-block">
           <div class="progress-meta">
-            <span>Блок ${state.learningIndex + 1} из ${blocks.length}</span>
+            <span>${escapeHtml(screen.number)} · ${escapeHtml(screen.title)}</span>
             <span>${progress}% прохождения</span>
           </div>
           <div class="progress-bar"><span style="width:${progress}%"></span></div>
         </div>
 
         <div class="learning-mini-stepper" aria-label="Прогресс обучающих модулей">
-          ${blocks
+          ${screens
             .map(
               (item, index) => `
                 <span class="${index === state.learningIndex ? "active" : state.visitedLearning.has(index) ? "seen" : ""}" title="${escapeHtml(item.title)}"></span>
@@ -1474,22 +1752,18 @@
             .join("")}
         </div>
 
-        <article class="learning-card">
-          ${renderBlockVisual(block)}
-          <div class="learning-points">
-            <h3>Запомнить</h3>
-            ${renderLearningPoints(block)}
+        <article class="focus-learning-card ${escapeHtml(screen.visualType)}">
+          <div class="focus-main-visual">
+            ${renderFocusVisual(screen)}
           </div>
         </article>
 
-        ${renderLearningInteraction(block)}
-        ${renderSummaryBlock(block)}
-        ${renderMiniQuestion(block)}
+        ${renderMiniQuestion(screen)}
 
         <div class="slide-controls no-print">
           <button class="btn ghost" type="button" data-action="learning-prev" ${state.learningIndex === 0 ? "disabled" : ""}>Назад</button>
           ${
-            state.learningIndex < blocks.length - 1
+            state.learningIndex < screens.length - 1
               ? '<button class="btn primary" type="button" data-action="learning-next">Далее</button>'
               : `<button class="btn primary" type="button" data-action="to-test" ${allViewed ? "" : "disabled"}>Перейти к тесту</button>`
           }
@@ -1500,8 +1774,9 @@
 
   function renderTest() {
     const current = selectedModule();
-    if (state.visitedLearning.size < current.learningBlocks.length) {
-      state.learningIndex = Math.min(state.learningIndex, current.learningBlocks.length - 1);
+    const screens = learningFlowScreens();
+    if (state.visitedLearning.size < screens.length) {
+      state.learningIndex = Math.min(state.learningIndex, screens.length - 1);
       setView("learning");
       return;
     }
@@ -1875,7 +2150,7 @@
   }
 
   function currentLearningBlock() {
-    return selectedModule().learningBlocks[state.learningIndex];
+    return learningFlowScreens()[state.learningIndex] || learningFlowScreens()[0];
   }
 
   function handleAction(event) {
@@ -1974,7 +2249,7 @@
         showToast("Ответьте на мини-вопрос, чтобы продолжить");
         return;
       }
-      state.learningIndex = Math.min(selectedModule().learningBlocks.length - 1, state.learningIndex + 1);
+      state.learningIndex = Math.min(learningFlowScreens().length - 1, state.learningIndex + 1);
       renderLearning();
       return;
     }
@@ -1997,7 +2272,7 @@
         showToast("Ответьте на мини-вопрос перед тестом");
         return;
       }
-      if (state.visitedLearning.size < selectedModule().learningBlocks.length) {
+      if (state.visitedLearning.size < learningFlowScreens().length) {
         showToast("Просмотрите все обучающие блоки перед тестом");
         return;
       }
