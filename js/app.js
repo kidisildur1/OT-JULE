@@ -309,11 +309,15 @@
   }
 
   function selectedCommonBlocks() {
-    return selectedUnit().commonBlocks || [];
+    const unit = selectedUnit();
+    if (!unit.commonTrainingRequired || !unit.commonTrainingId) {
+      return [];
+    }
+    return unit.commonBlocks || [];
   }
 
   function hasDepartmentCommonBlock(unit = selectedUnit()) {
-    return Boolean(unit.commonBlocks && unit.commonBlocks.length);
+    return Boolean(unit.commonTrainingRequired && unit.commonTrainingId && unit.commonBlocks && unit.commonBlocks.length);
   }
 
   function resetDepartmentProgress() {
@@ -2037,7 +2041,7 @@
       <section class="test-screen">
         <div class="screen-heading">
           <p class="eyebrow">Итоговый тест</p>
-          <h2>10 вопросов · проходной балл ${current.passScore}%</h2>
+          <h2>${current.test.length} вопросов · проходной балл ${current.passScore}%</h2>
           <p>Выберите один правильный вариант в каждом вопросе. После отправки появятся пояснения.</p>
         </div>
 
