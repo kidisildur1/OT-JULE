@@ -907,33 +907,66 @@
       warning: "warning",
       summary: "ppe"
     };
+    const equipmentVideo = typeof equipment.video === "object" && equipment.video !== null ? equipment.video : {};
+    const legacyVideoSource = typeof equipment.video === "string" ? equipment.video : "";
+    const videoTitle = equipmentVideo.title || videoBrief.title || "Принцип работы установки";
+    const videoSource = equipmentVideo.src || videoBrief.videoSrc || legacyVideoSource || videoBrief.placeholder || "";
+    const videoPoster = equipmentVideo.poster || videoBrief.poster || equipment.poster || "";
+    const hasVideoPoster = Boolean(videoPoster);
+    const videoDuration = equipmentVideo.duration || videoBrief.duration || equipment.videoDuration || "2-3 мин";
+    const videoDescription =
+      equipmentVideo.description ||
+      videoBrief.description ||
+      videoBrief.focus ||
+      "Короткий обзор показывает принцип работы установки, ключевые зоны внимания и действия перед переходом к правилам охраны труда.";
+    const videoKeyPoints =
+      videoBrief.keyPoints ||
+      videoBrief.watchlist ||
+      (videoBrief.cards || []).slice(0, 4).map((card) => card.title);
 
     app.innerHTML = `
       ${renderSteps("video")}
-      <section class="learning-layout">
+      <section class="learning-layout video-learning-screen">
         <div class="screen-heading">
           <p class="eyebrow">Видео</p>
-          <h2>${escapeHtml(videoBrief.title || "Принцип работы установки")}</h2>
+          <h2>${escapeHtml(videoTitle)}</h2>
           <p>${escapeHtml(equipment.name)} · ${escapeHtml(equipment.instruction)} · видео объясняет процесс и опасные зоны без реального запуска оборудования.</p>
         </div>
 
         ${renderBreadcrumbs()}
 
-        <div class="video-shell">
-          <video id="trainingVideo" class="${state.videoMissing ? "is-hidden" : ""}" controls playsinline preload="metadata" poster="assets/img/industrial-safety-panel.png">
-            <source src="${escapeHtml(equipment.video)}" type="video/mp4">
-          </video>
-          <div id="videoFallback" class="video-fallback ${state.videoMissing ? "" : "is-hidden"}">
-            <span class="fallback-mark"></span>
-            <h3>Видео-заглушка: принцип работы</h3>
-            <p>Файл ${escapeHtml(equipment.video)} не найден. Съёмка предполагается на остановленном оборудовании: стрелки, схемы, стоп-кадры, титры и подсветка опасных зон.</p>
+        <div class="video-stage">
+          <div class="video-shell">
+            <div class="video-frame">
+              <video id="trainingVideo" class="${state.videoMissing ? "is-hidden" : ""}" controls playsinline preload="metadata" ${hasVideoPoster ? `poster="${escapeHtml(videoPoster)}"` : ""}>
+                <source src="${escapeHtml(videoSource)}" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+              </video>
+              ${hasVideoPoster ? "" : `
+                <div id="videoPosterPlaceholder" class="video-poster-placeholder">
+                  <span class="fallback-mark"></span>
+                  <h3>${escapeHtml(videoTitle)}</h3>
+                  <p>Видео ${escapeHtml(videoDuration)}</p>
+                  <button id="videoStartButton" class="btn primary" type="button">Смотреть видео</button>
+                </div>
+              `}
+              <div id="videoFallback" class="video-fallback ${state.videoMissing ? "" : "is-hidden"}">
+                <span class="fallback-mark"></span>
+                <h3>${escapeHtml(videoTitle)}</h3>
+                <p>Файл ${escapeHtml(videoSource || "videoSrc")} не найден. Используйте 16:9 ролик или poster: оборудование должно быть видно полностью, без обрезки важных зон.</p>
+                <button class="btn secondary video-placeholder-button" type="button" data-action="mark-video">Смотреть видео</button>
+              </div>
+            </div>
           </div>
           <aside class="video-insight-panel">
-            <span>В фокусе</span>
-            <strong>${escapeHtml(videoBrief.focus || "Принцип работы и опасные зоны")}</strong>
-            <p>Видео не заменяет ИОТ: оно помогает понять, что движется, где появляется риск и почему дальше идут правила охраны труда.</p>
-            <ul class="video-watchlist">
-              ${(videoBrief.watchlist || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+            <div class="video-meta-row">
+              <span>Принцип работы установки</span>
+              <b>${escapeHtml(videoDuration)}</b>
+            </div>
+            <strong>${escapeHtml(videoBrief.focus || videoTitle)}</strong>
+            <p>${escapeHtml(videoDescription)}</p>
+            <ul class="video-keypoints">
+              ${videoKeyPoints.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
             </ul>
           </aside>
         </div>
@@ -956,13 +989,15 @@
         <div class="action-strip no-print">
           <button class="btn ghost" type="button" data-action="go" data-view="equipment">Назад</button>
           <span id="videoStatusHint" class="video-status-hint ${state.videoCanContinue || state.videoMissing ? "is-hidden" : ""}">Кнопка появится после просмотра.</span>
-          <button id="videoContinueButton" class="btn primary ${state.videoCanContinue || state.videoMissing ? "" : "is-hidden"}" type="button" data-action="mark-video">Видео просмотрено</button>
+          <button id="videoContinueButton" class="btn primary ${state.videoCanContinue || state.videoMissing ? "" : "is-hidden"}" type="button" data-action="mark-video">Далее к правилам</button>
         </div>
       </section>
     `;
 
     const video = document.getElementById("trainingVideo");
     const fallback = document.getElementById("videoFallback");
+    const posterPlaceholder = document.getElementById("videoPosterPlaceholder");
+    const startButton = document.getElementById("videoStartButton");
     const continueButton = document.getElementById("videoContinueButton");
     const statusHint = document.getElementById("videoStatusHint");
     const unlockVideo = () => {
@@ -974,8 +1009,16 @@
       state.videoMissing = true;
       unlockVideo();
       video.classList.add("is-hidden");
+      posterPlaceholder?.classList.add("is-hidden");
       fallback.classList.remove("is-hidden");
     };
+    startButton?.addEventListener("click", () => {
+      posterPlaceholder?.classList.add("is-hidden");
+      video.play().catch(() => undefined);
+    });
+    video.addEventListener("play", () => {
+      posterPlaceholder?.classList.add("is-hidden");
+    });
     video.addEventListener("error", showFallback);
     video.querySelector("source").addEventListener("error", showFallback);
     video.addEventListener("ended", unlockVideo);
@@ -1680,7 +1723,7 @@
   function renderCommonGridVisual(screen, className = "common-info-grid") {
     const cards = (screen.cards || []).slice(0, focusCardLimit(screen));
     return `
-      <div class="common-onboarding-visual ${className}">
+      <div class="common-onboarding-visual ${className} card-count-${cards.length}">
         ${cards.map((card, index) => renderCommonCard(card, index)).join("")}
       </div>
     `;
@@ -1731,7 +1774,7 @@
   function renderCommonTimelineVisual(screen) {
     const cards = (screen.cards || []).slice(0, focusCardLimit(screen));
     return `
-      <div class="common-timeline-visual">
+      <div class="common-timeline-visual card-count-${cards.length}">
         ${cards
           .map(
             (card, index) => `
@@ -1744,6 +1787,25 @@
             `
           )
           .join("")}
+      </div>
+    `;
+  }
+
+  function renderCommonBreadcrumbPills(unit) {
+    const organization = selectedOrganization();
+    const items = [organization?.name, unit.name, unit.sectionName].filter(Boolean);
+    return `
+      <div class="common-breadcrumb-pills" aria-label="Маршрут общего инструктажа">
+        ${items.map((item, index) => `<span>${escapeHtml(item)}${index < items.length - 1 ? "<b>›</b>" : ""}</span>`).join("")}
+      </div>
+    `;
+  }
+
+  function renderCommonProgressRing(progress, current, total) {
+    return `
+      <div class="common-progress-ring" style="--common-progress:${progress * 3.6}deg" aria-label="Прогресс общего блока ${progress}%">
+        <span>${progress}%</span>
+        <small>${current}/${total}</small>
       </div>
     `;
   }
@@ -2011,31 +2073,29 @@
     app.innerHTML = `
       ${renderSteps("department-learning")}
       <section class="learning-screen focus-learning-screen department-common-screen" style="--learning-progress:${progress}%">
-        <div class="focus-learning-header">
-          <div>
-            <div class="learning-title-row">
-              <p class="eyebrow">${escapeHtml(unit.commonTitle || "Общие требования охраны труда")}</p>
-              <span class="badge ${focusBadgeClass(badge.tone)}">${escapeHtml(badge.label)}</span>
+        <div class="common-training-hero">
+          <div class="common-hero-copy">
+            <div class="common-hero-row">
+              <p class="eyebrow">БАЗОВЫЙ ИНСТРУКТАЖ</p>
+              <span class="badge badge-mandatory">Общий блок</span>
             </div>
-            <h2>${escapeHtml(screen.title)}</h2>
-            <p class="key-thought">${escapeHtml(screen.lead)}</p>
+            <h2>Общий блок охраны труда</h2>
+            <p>${escapeHtml(unit.commonSubtitle || "Правила, обязательные для всех установок отдела бесшовных труб")}</p>
+            ${renderCommonBreadcrumbPills(unit)}
           </div>
-          <div class="focus-step-count">
-            <span>Общий блок</span>
-            <strong>${state.departmentLearningIndex + 1}/${screens.length}</strong>
+          <div class="common-hero-progress">
+            ${renderCommonProgressRing(progress, state.departmentLearningIndex + 1, screens.length)}
+            <div>
+              <span>Текущий слайд</span>
+              <strong>${escapeHtml(screen.number)} · ${escapeHtml(screen.title)}</strong>
+            </div>
           </div>
         </div>
 
-        <p class="department-common-subtitle">${escapeHtml(unit.commonSubtitle || "Правила, обязательные до выбора установки")}</p>
-
-        ${renderBreadcrumbs(false)}
-
-        <div class="progress-block">
-          <div class="progress-meta">
-            <span>${escapeHtml(screen.number)} · ${escapeHtml(screen.title)}</span>
-            <span>${progress}% общего блока</span>
-          </div>
+        <div class="common-progress-strip">
+          <span>Прогресс общего блока</span>
           <div class="progress-bar"><span style="width:${progress}%"></span></div>
+          <b>${progress}%</b>
         </div>
 
         <div class="learning-mini-stepper" aria-label="Прогресс общего блока">
@@ -2048,6 +2108,15 @@
             .join("")}
         </div>
 
+        <div class="common-slide-header">
+          <div>
+            <span class="badge ${focusBadgeClass(badge.tone)}">${escapeHtml(badge.label)}</span>
+            <h3>${escapeHtml(screen.title)}</h3>
+            <p>${escapeHtml(screen.lead)}</p>
+          </div>
+          <strong>Слайд ${state.departmentLearningIndex + 1} из ${screens.length}</strong>
+        </div>
+
         <article class="focus-learning-card ${escapeHtml(screen.visualType)}">
           <div class="focus-main-visual">
             ${renderFocusVisual(screen)}
@@ -2056,13 +2125,19 @@
 
         ${renderDepartmentMiniQuestion(screen)}
 
-        <div class="slide-controls no-print">
-          <button class="btn ghost" type="button" data-action="department-learning-prev" ${state.departmentLearningIndex === 0 ? "disabled" : ""}>Назад</button>
-          ${
-            state.departmentLearningIndex < screens.length - 1
-              ? '<button class="btn primary" type="button" data-action="department-learning-next">Далее</button>'
-              : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Теперь выберите установку</button>`
-          }
+        <div class="common-training-footer">
+          <article class="common-safety-note">
+            <span>${renderIcon("shield")}</span>
+            <p>Безопасность — наш приоритет. Соблюдаем правила — работаем безопасно.</p>
+          </article>
+          <div class="slide-controls no-print">
+            <button class="btn ghost" type="button" data-action="department-learning-prev" ${state.departmentLearningIndex === 0 ? "disabled" : ""}>Назад</button>
+            ${
+              state.departmentLearningIndex < screens.length - 1
+                ? '<button class="btn primary" type="button" data-action="department-learning-next">Далее</button>'
+                : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Теперь выберите установку</button>`
+            }
+          </div>
         </div>
       </section>
     `;

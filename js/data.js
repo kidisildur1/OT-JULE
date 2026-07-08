@@ -24,11 +24,13 @@ const seamlessTubeCommonBlocks = [
     lead: "СИЗ надевают до входа в рабочую зону и проверяют их исправность.",
     badge: { label: "СИЗ", tone: "safe" },
     visualType: "ppe-cards",
+    cardLimit: 5,
     cards: [
-      { tone: "safe", icon: "suit", title: "Спецодежда", text: "исправная, застегнутая, без свисающих частей" },
-      { tone: "safe", icon: "shoe", title: "Спецобувь", text: "исправная и подходящая для участка" },
-      { tone: "safe", icon: "eye", title: "Очки / щиток", text: "защита глаз и лица обязательна" },
-      { tone: "info", icon: "shield", title: "Перчатки", text: "используются при необходимости и безопасных операциях" }
+      { tone: "safe", icon: "suit", title: "Спецодежда", text: "исправна и застегнута" },
+      { tone: "safe", icon: "shoe", title: "Спецобувь", text: "используется на рабочем месте" },
+      { tone: "safe", icon: "eye", title: "Очки или щиток", text: "защищают глаза и лицо" },
+      { tone: "info", icon: "shield", title: "Перчатки", text: "применяются при необходимости" },
+      { tone: "danger", icon: "stop", title: "Нет СИЗ", text: "к работе не приступать" }
     ]
   },
   {
@@ -38,11 +40,13 @@ const seamlessTubeCommonBlocks = [
     lead: "До запуска рабочая зона должна быть свободной, освещенной и готовой к безопасной эвакуации.",
     badge: { label: "Проверить", tone: "info" },
     visualType: "checklist-card",
+    cardLimit: 5,
     cards: [
-      { tone: "safe", icon: "clean", title: "Убрать лишнее", text: "предметы не должны мешать работе" },
-      { tone: "required", icon: "center", title: "Проходы", text: "не загромождать проходы и пути эвакуации" },
-      { tone: "required", icon: "shield", title: "Готовность", text: "аптечка и средства пожаротушения доступны" },
-      { tone: "info", icon: "eye", title: "Освещение", text: "рабочая зона хорошо видна" }
+      { tone: "safe", icon: "clean", title: "Убрать лишнее", text: "ничего не мешает работе" },
+      { tone: "required", icon: "center", title: "Проходы свободны", text: "пути движения не загромождены" },
+      { tone: "required", icon: "shield", title: "Эвакуация доступна", text: "пути выхода не перекрыты" },
+      { tone: "info", icon: "check", title: "Аптечка", text: "место известно и доступно" },
+      { tone: "warning", icon: "fire", title: "Огнетушитель", text: "средства пожаротушения на месте" }
     ]
   },
   {
@@ -54,11 +58,11 @@ const seamlessTubeCommonBlocks = [
     visualType: "do-dont-card",
     cardLimit: 5,
     cards: [
-      { tone: "required", icon: "wrench", title: "Инструмент", text: "проверить состояние до работы" },
-      { tone: "required", icon: "clamp", title: "Крепления", text: "узлы и оснастка должны быть надежны" },
-      { tone: "safe", icon: "shield", title: "Ограждения", text: "кожухи и защиты стоят на месте" },
-      { tone: "danger", icon: "bolt", title: "Электрика", text: "проводка и заземление без повреждений" },
-      { tone: "warning", icon: "alert", title: "Нашли дефект", text: "остановиться и сообщить руководителю" }
+      { tone: "required", icon: "wrench", title: "Инструмент", text: "исправен и подходит для работы" },
+      { tone: "required", icon: "clamp", title: "Крепления", text: "узлы закреплены надежно" },
+      { tone: "safe", icon: "shield", title: "Ограждения", text: "защитные элементы установлены" },
+      { tone: "safe", icon: "bolt", title: "Заземление", text: "проверено перед пуском" },
+      { tone: "warning", icon: "alert", title: "Неисправность", text: "остановиться и сообщить руководителю" }
     ]
   },
   {
@@ -68,11 +72,13 @@ const seamlessTubeCommonBlocks = [
     lead: "На оборудовании работают минимум два сотрудника с понятными ролями.",
     badge: { label: "Роли", tone: "info" },
     visualType: "role-stepper",
+    cardLimit: 5,
     cards: [
-      { tone: "required", icon: "user", title: "Минимум двое", text: "один сотрудник на оборудовании не работает" },
-      { tone: "required", icon: "center", title: "Оператор", text: "управляет процессом и контролирует ход работы" },
+      { tone: "required", icon: "user", title: "Минимум двое", text: "работы выполняются не в одиночку" },
+      { tone: "required", icon: "center", title: "Оператор", text: "контролирует процесс" },
       { tone: "safe", icon: "eye", title: "Помощник", text: "находится в безопасной зоне" },
-      { tone: "danger", icon: "stop", title: "Посторонние", text: "к рабочей зоне не допускаются" }
+      { tone: "danger", icon: "stop", title: "Посторонние", text: "не допускаются к рабочему месту" },
+      { tone: "info", icon: "check", title: "Связь", text: "действия согласованы" }
     ]
   },
   {
@@ -82,14 +88,13 @@ const seamlessTubeCommonBlocks = [
     lead: "Электрооборудование проверяют до работы, ремонт выполняют только допущенные лица.",
     badge: { label: "Высокий риск", tone: "danger" },
     visualType: "safety-rules-card",
-    cardLimit: 6,
+    cardLimit: 5,
     cards: [
-      { tone: "required", icon: "bolt", title: "Рубильники", text: "проверить доступность и исправное положение" },
-      { tone: "required", icon: "check", title: "Кнопки включения", text: "убедиться, что управление работает штатно" },
-      { tone: "warning", icon: "alert", title: "Силовая проводка", text: "не допускать повреждений и посторонних предметов" },
-      { tone: "safe", icon: "shield", title: "Заземление", text: "проверить наличие и целостность перед работой" },
-      { tone: "danger", icon: "bolt", title: "Токоведущие части", text: "не касаться оголенных и поврежденных элементов" },
-      { tone: "danger", icon: "stop", title: "Ремонт запрещен", text: "самостоятельно не ремонтировать, вызвать допущенных лиц" }
+      { tone: "required", icon: "bolt", title: "Рубильники и кнопки", text: "проверить исправность" },
+      { tone: "warning", icon: "alert", title: "Провода", text: "осмотреть изоляцию" },
+      { tone: "safe", icon: "shield", title: "Заземление", text: "должно быть исправным" },
+      { tone: "danger", icon: "bolt", title: "Токоведущие части", text: "не прикасаться" },
+      { tone: "danger", icon: "stop", title: "Ремонт", text: "только допущенные лица" }
     ]
   },
   {
@@ -99,13 +104,14 @@ const seamlessTubeCommonBlocks = [
     lead: "При аварии сначала прекращают работу, затем помогают людям и вызывают нужную службу.",
     badge: { label: "Авария", tone: "danger" },
     visualType: "emergency-timeline",
-    cardLimit: 5,
+    cardLimit: 6,
     cards: [
-      { tone: "danger", icon: "stop", title: "Прекратить работу", text: "остановить действие и не продолжать операцию" },
-      { tone: "safe", icon: "shield", title: "Увести из опасной зоны", text: "вывести пострадавшего, если это безопасно" },
-      { tone: "required", icon: "user", title: "Первая помощь", text: "оказать помощь и сообщить руководителю" },
-      { tone: "warning", icon: "alert", title: "103 / 112", text: "вызвать помощь при травме" },
-      { tone: "danger", icon: "fire", title: "101 / 112", text: "вызвать службу при пожаре" }
+      { tone: "danger", icon: "stop", title: "СТОП", text: "прекратить работу" },
+      { tone: "safe", icon: "shield", title: "Безопасная зона", text: "вывести пострадавшего" },
+      { tone: "required", icon: "user", title: "Первая помощь", text: "оказать помощь" },
+      { tone: "info", icon: "user", title: "Руководитель", text: "сообщить начальнику участка" },
+      { tone: "warning", icon: "alert", title: "103 / 112", text: "вызвать помощь" },
+      { tone: "danger", icon: "fire", title: "101 / 112", text: "при пожаре" }
     ],
     miniQuestion: {
       question: "Что нужно сделать при обнаружении неисправности оборудования?",
@@ -177,7 +183,13 @@ const seamlessTubeEquipment = [
     instruction: "ИОТ-73",
     instructionTitle: "Инструкция по охране труда при работе на ЭУ-ПППТ",
     status: "ready",
-    video: "assets/video/eu_pppt_principle.mp4",
+    video: {
+      title: "ЭУ-ПППТ: принцип работы установки",
+      description: "Короткий ролик показывает рабочую клеть, валки, линию привода, пульт управления и основные опасные зоны установки.",
+      duration: "80–90 сек",
+      src: "assets/video/euppt-principle-720p.mp4",
+      poster: ""
+    },
     developer: "Бараков И.С.",
     safetyResponsible: "Разинькова А.В.",
     description: "Продольная прокатка труб: рабочая клеть, линия привода, межклетевой промежуток",
