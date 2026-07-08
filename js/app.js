@@ -2018,6 +2018,34 @@
     return renderFocusCards(screen);
   }
 
+  function renderCommonFocusVisual(screen) {
+    if (screen.visualType === "info-cards") {
+      return renderCommonGridVisual(screen, "common-info-grid");
+    }
+
+    if (screen.visualType === "ppe-cards") {
+      return renderCommonGridVisual(screen, "common-ppe-grid");
+    }
+
+    if (screen.visualType === "checklist-card") {
+      return renderCommonChecklistVisual(screen);
+    }
+
+    if (screen.visualType === "do-dont-card") {
+      return renderCommonDoDontVisual(screen);
+    }
+
+    if (screen.visualType === "role-stepper" || screen.visualType === "emergency-timeline") {
+      return renderCommonTimelineVisual(screen);
+    }
+
+    if (screen.visualType === "safety-rules-card") {
+      return renderCommonGridVisual(screen, "common-safety-grid");
+    }
+
+    return renderFocusCards(screen);
+  }
+
   function renderDepartmentMiniQuestion(screen) {
     const mini = screen.miniQuestion;
     if (!mini) {
@@ -2027,7 +2055,7 @@
     const miniAnswer = state.departmentMiniAnswers[screen.id];
     return `
       <form class="mini-question" aria-label="Мини-проверка общего блока">
-        <div>
+        <div class="mini-question-head">
           <span>${renderIcon("quiz")}</span>
           <strong>${escapeHtml(mini.question)}</strong>
         </div>
@@ -2119,7 +2147,7 @@
 
         <article class="focus-learning-card ${escapeHtml(screen.visualType)}">
           <div class="focus-main-visual">
-            ${renderFocusVisual(screen)}
+            ${renderCommonFocusVisual(screen)}
           </div>
         </article>
 
@@ -2135,7 +2163,7 @@
             ${
               state.departmentLearningIndex < screens.length - 1
                 ? '<button class="btn primary" type="button" data-action="department-learning-next">Далее</button>'
-                : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Теперь выберите установку</button>`
+                : `<button class="btn primary" type="button" data-action="department-learning-complete" ${allViewed && answered ? "" : "disabled"}>Выбрать установку</button>`
             }
           </div>
         </div>

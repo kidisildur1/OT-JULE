@@ -187,8 +187,7 @@ const seamlessTubeEquipment = [
       title: "ЭУ-ПППТ: принцип работы установки",
       description: "Короткий ролик показывает рабочую клеть, валки, линию привода, пульт управления и основные опасные зоны установки.",
       duration: "80–90 сек",
-      src: "assets/video/euppt-principle-720p.mp4",
-      poster: ""
+      src: "assets/video/euppt-principle-720p.mp4"
     },
     developer: "Бараков И.С.",
     safetyResponsible: "Разинькова А.В.",
